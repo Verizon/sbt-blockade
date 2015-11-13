@@ -1,0 +1,21 @@
+# update the dependencies and get sieved
+> update
+
+# check the cache file was written
+$ exists target/sieved
+
+# update again (expecting it to be skipped)
+> update
+
+# remove and try siving again (expect to be sieved)
+$ delete target/sieved
+
+# update again, the cache file will be rewritten and sieved
+> update
+
+# pause for longer than the `enforcementInterval` and expect to be sieved
+$ pause
+> update
+
+# update again (expecting it to be skipped)
+> update

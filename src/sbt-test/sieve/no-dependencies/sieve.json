@@ -1,0 +1,16 @@
+{
+  "modules": [
+    {
+      "organization": "commons-codec",
+      "name": "commons-codec",
+      "range": "[1.0,1.6]",
+      "expiry": "2016-06-12 15:36:31"
+    },
+    {
+      "organization": "commons-lang",
+      "name": "commons-lang",
+      "range": "[1.0,2.3]",
+      "expiry": "2016-06-12 15:36:31"
+    }
+  ]
+}

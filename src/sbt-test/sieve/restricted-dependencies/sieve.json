@@ -1,0 +1,28 @@
+{
+  "modules": [
+    {
+      "organization": "commons-codec",
+      "name": "commons-codec",
+      "range": "[1.0,2.0]",
+      "expiry": "2012-06-12 15:36:31"
+    },
+    {
+      "organization": "commons-lang",
+      "name": "commons-lang",
+      "range": "[1.0,2.7]",
+      "expiry": "2016-06-12 15:36:31"
+    },
+    {
+      "organization": "intelmedia.ws.funnel",
+      "name": "http",
+      "range": "(,1.8.0[",
+      "expiry": "2013-06-13 12:00:00"
+    },
+    {
+      "organization": "oncue.svc.journal",
+      "name": "core",
+      "range": "(,2.0.5[",
+      "expiry": "2015-04-22 12:00:00"
+    }
+  ]
+}
