@@ -1,0 +1,23 @@
+language: scala
+scala:
+  - 2.10.5
+
+jdk:
+  - oraclejdk8
+
+branches:
+  only:
+    - master
+
+before_script:
+  - git checkout -qf $TRAVIS_BRANCH
+
+script:
+  - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then sbt 'release with-defaults'; else sbt validate; fi"
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
