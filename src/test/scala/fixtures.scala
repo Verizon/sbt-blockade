@@ -1,4 +1,4 @@
-package oncue.build
+package verizon.build
 
 import sbt.impl.DependencyBuilders
 import java.net.URL

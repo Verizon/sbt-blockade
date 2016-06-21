@@ -1,6 +1,6 @@
 
-import oncue.build._
-import oncue.build.SieveKeys._
+import verizon.build._
+import verizon.build.SieveKeys._
 import java.net.URL
 import scala.concurrent.duration._
 

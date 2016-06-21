@@ -1,4 +1,4 @@
-package oncue.build
+package verizon.build
 
 import scala.io.Source
 import java.io.File
