@@ -1,4 +1,4 @@
-package oncue.build
+package verizon.build
 
 import sbt._
 import sbt.Keys._

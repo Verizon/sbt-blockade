@@ -1,4 +1,4 @@
-package oncue.build
+package verizon.build
 
 import org.scalatest.{FlatSpec,Matchers}
 import scala.util.{Try,Failure,Success}

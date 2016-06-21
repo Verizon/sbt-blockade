@@ -14,7 +14,7 @@ $ delete target/sieved
 > update
 
 # pause for longer than the `enforcementInterval` and expect to be sieved
-$ pause
+$ sleep 5
 > update
 
 # update again (expecting it to be skipped)

@@ -1,6 +1,6 @@
 
-import oncue.build._
-import oncue.build.SieveKeys._
+import verizon.build._
+import verizon.build.SieveKeys._
 import java.net.URL
 
 scalaVersion := "2.10.4"
