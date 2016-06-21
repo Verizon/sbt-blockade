@@ -9,9 +9,6 @@ branches:
   only:
     - master
 
-before_script:
-  - git checkout -qf $TRAVIS_BRANCH
-
 script:
   - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then sbt 'release with-defaults'; else sbt validate; fi"
   - find $HOME/.sbt -name "*.lock" | xargs rm
@@ -21,3 +18,12 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
+
+notifications:
+  email:
+    recipients:
+      - timothy.m.perrett@one.verizon.com
+      - andrew.mohrland@one.verizon.com
+      - cody.allen@one.verizon.com
+    on_success: change
+    on_failure: always
