@@ -5,4 +5,4 @@ libraryDependencies <+= (sbtVersion) { sv =>
   "org.scala-sbt" % "scripted-plugin" % sv
 }
 
-addSbtPlugin("verizon.inf.build" % "sbt-verizon" % "0.20.127")
+addSbtPlugin("verizon.inf.build" % "sbt-verizon" % "1.0.+")
