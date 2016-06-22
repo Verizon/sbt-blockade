@@ -27,7 +27,7 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
       val fo: (ModuleFilter, ModuleOutcome) = (
         (id: ModuleID) => toModuleId(id) == toModuleId(`shapeless-2.2.5`),
         (id: ModuleID) => (Restricted(id), "some message")
-      )
+        )
       def fos = Seq(fo)
       "returns a representation of a warning that contains the path to the nested dep" in {
         val sortedIdsBottomUp = topoSort(graphWithNestedShapeless).reverse
@@ -60,7 +60,6 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
            |    org.tpolecat:doobie-core:0.2.3
            |      com.chuusai:shapeless:2.2.5
            |""".stripMargin
-
     }
   }
 }

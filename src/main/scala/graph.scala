@@ -17,7 +17,6 @@
 
 package verizon.build
 
-
 object depgraph {
 
   import sbt._
@@ -27,7 +26,6 @@ object depgraph {
   import sbinary.{Format, DefaultProtocol}
 
   object SbtUpdateReport {
-
 
     type OrganizationArtifactReport = {
       def modules: Seq[ModuleReport]
@@ -49,8 +47,8 @@ object depgraph {
           license = report.licenses.headOption.map(_._1),
           evictedByVersion = evictedByVersion,
           jarFile = jarFile,
-          error = report.problem),
-          report.callers.map(caller ⇒ Edge(caller.caller, report.module)))
+          error = report.problem
+        ), report.callers.map(caller ⇒ Edge(caller.caller, report.module)))
       }
 
       val (nodes, edges) = report.details.flatMap(moduleEdges).unzip
@@ -81,7 +79,6 @@ object depgraph {
     def isUsed: Boolean = !isEvicted
 
     def isEvicted: Boolean = evictedByVersion.isDefined
-
   }
 
   case class ModuleGraph(nodes: Seq[Module], edges: Seq[Edge]) {
@@ -112,5 +109,4 @@ object depgraph {
   }
 
 }
-
 

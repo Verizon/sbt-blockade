@@ -49,7 +49,6 @@ object SievePlugin {
       b <- Try(Duration.fromNanos(a).toNanos)
     } yield b > System.nanoTime).getOrElse(true)
 
-
   val moduleGraphSbtTask =
     (sbt.Keys.update, dependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
       SbtUpdateReport.fromConfigurationReport(update.configuration(config.name).get, root)
@@ -93,7 +92,6 @@ object SievePlugin {
                 log.warn(YELLOW + s"[${name.value}]" + showWarnings(w) + RESET)
             }
         }
-
       } else {
         () // do nothing here as the project has already been sieved recently.
       }

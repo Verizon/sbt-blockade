@@ -21,7 +21,6 @@ object aux {
     mid.organisation %% mid.name % mid.version
   }
 
-
   def stripUnderscores(g: ModuleGraph): ModuleGraph = {
     def stripUnderscore(mid: ModuleId): ModuleId = mid.copy(name = mid.name.takeWhile(_ != '_'))
     g.copy(
@@ -56,7 +55,6 @@ object aux {
     )
   }
 
-
   def showWarnings(w: RestrictionWarning): String = {
     val path = w.fromCauseToRoot.reverse
     def go(indent: Int, remaining: Seq[ModuleId], acc: String): String = remaining match {
@@ -86,7 +84,5 @@ object aux {
 
     go(g, Seq.empty)
   }
-
-
 }
 
