@@ -3,34 +3,40 @@ package verizon.build
 import sbt._
 import sbt.Keys._
 import scala.concurrent.duration._
+import depgraph._
 
 object SieveKeys {
+
   import java.net.URL
 
   val enforcementInterval = SettingKey[Duration]("sieve-enforcement-interval")
-  val cacheFile           = SettingKey[File]("sieve-cache-file")
-  val sieves              = SettingKey[Seq[URL]]("sieve-urls")
-  val sieve               = TaskKey[Unit]("sieve")
+  val cacheFile = SettingKey[File]("sieve-cache-file")
+  val sieves = SettingKey[Seq[URL]]("sieve-urls")
+  val sieve = TaskKey[Unit]("sieve")
+  val dependencyGraphCrossProjectId = SettingKey[ModuleID]("dependency-graph-cross-project-id")
 }
 
 object SievePlugin {
+
   import SieveKeys._
   import SieveOps._
-  import scala.Console.{CYAN,RED,YELLOW,GREEN,RESET}
-  import scala.util.{Try,Failure,Success} // poor mans scalaz.\/
-  import scala.io.Source
+  import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
+  import scala.util.{Try, Failure, Success}
 
-  def display(name: String, so: Seq[(Outcome,Message)]): String = {
+  import scala.io.Source
+  import aux._
+
+  def display(name: String, so: Seq[(Outcome, Message)]): String = {
     CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
-    so.distinct.map {
-      case (Restricted(m), Some(msg)) => RED + s"Restricted: ${m.toString}. $msg" + RESET
-      case (Deprecated(m), Some(msg)) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
-      case (o, m) => "Unkonwn input to sieve display."
-    }.mkString("\n\t",",\n\t","")
+      so.distinct.map {
+        case (Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
+        case (Deprecated(m), msg) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
+        case (o, m) => "Unkonwn input to sieve display."
+      }.mkString("\n\t", ",\n\t", "")
   }
 
-  private def dependenciesOK(name: String) =
-    GREEN + s"[$name] All dependencies are within current restrictions." + RESET
+  private def dependenciesOK(name: String, transitive: Boolean = false) =
+    GREEN + s"[$name] All ${if (transitive) "transitive " else "direct"} dependencies are within current restrictions." + RESET
 
   private def writeCheckFile(f: File, period: Duration): Unit = {
     val contents = System.nanoTime + period.toNanos
@@ -43,37 +49,51 @@ object SievePlugin {
       b <- Try(Duration.fromNanos(a).toNanos)
     } yield b > System.nanoTime).getOrElse(true)
 
+
+  val moduleGraphSbtTask =
+    (sbt.Keys.update, dependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
+      SbtUpdateReport.fromConfigurationReport(update.configuration(config.name).get, root)
+    }
+
   def settings: Seq[Def.Setting[_]] = Seq(
-    update               <<= update.dependsOn(sieve),
-    cacheFile             := target.value / "sieved",
-    enforcementInterval   := 30.minutes,
-    sieves                := Seq.empty,
-    skip in sieve         := {
+    dependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
+    cacheFile := target.value / "sieved",
+    enforcementInterval := 30.minutes,
+    sieves := Seq.empty,
+    skip in sieve := {
       val f = cacheFile.value
-      if(f.exists) readCheckFile(f) else false
+      if (f.exists) readCheckFile(f) else false
     },
-    sieve                 := {
+    sieve := {
       val log = streams.value.log
 
-      if(!(skip in sieve).value){
-        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map(loadFromURL)) match {
-        case Failure(_: java.net.UnknownHostException) => ()
+      if (!(skip in sieve).value) {
+        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map(loadFromURL), moduleGraphSbtTask.value) match {
+          case Failure(_: java.net.UnknownHostException) => ()
 
-        case Failure(e) =>
-          log.error(s"Unable to execute the specified sieves because an error occoured: $e")
+          case Failure(e) =>
+            log.error(s"Unable to execute the specified sieves because an error occurred: $e")
 
-        case Success(y) =>
-          y.toList match {
-            case Nil  =>
-              writeCheckFile(cacheFile.value, enforcementInterval.value)
-              log.info(dependenciesOK(name.value))
-            case list => {
-              log.warn(display(name.value, list))
-              if(list.exists(_._1.raisesError == true)) sys.error("One or more of the specified dependencies are restricted.")
-              else ()
+          case Success((immediateOutcomes, maybeWarning)) =>
+            immediateOutcomes.toList match {
+              case Nil =>
+                writeCheckFile(cacheFile.value, enforcementInterval.value)
+                log.info(dependenciesOK(name.value))
+              case list => {
+                log.warn(display(name.value, list))
+                if (list.exists(_._1.raisesError == true))
+                  sys.error("One or more of the specified immediate dependencies are restricted.")
+                else ()
+              }
             }
-          }
+            maybeWarning match {
+              case None =>
+                log.info(dependenciesOK(name = name.value, transitive = true))
+              case Some(w) =>
+                log.warn(YELLOW + s"[${name.value}]" + showWarnings(w) + RESET)
+            }
         }
+
       } else {
         () // do nothing here as the project has already been sieved recently.
       }

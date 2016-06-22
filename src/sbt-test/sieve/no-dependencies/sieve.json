@@ -1,5 +1,5 @@
 {
-  "modules": [
+  "blacklist": [
     {
       "organization": "commons-codec",
       "name": "commons-codec",

@@ -36,3 +36,4 @@ coverageEnabled := false
 libraryDependencies += "net.liftweb"   %% "lift-json" % "2.5.1"
 
 addCommandAlias("validate", ";test;scripted")
+
