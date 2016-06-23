@@ -49,6 +49,14 @@ object SievePlugin {
       b <- Try(Duration.fromNanos(a).toNanos)
     } yield b > System.nanoTime).getOrElse(true)
 
+  private def flattenTrys[T](xs: Seq[Try[T]]): Try[Seq[T]] = {
+    val (ss: Seq[Success[T]]@unchecked, fs: Seq[Failure[T]]@unchecked) =
+      xs.partition(_.isSuccess)
+
+    if (fs.isEmpty) Success(ss map (_.get))
+    else Failure[Seq[T]](fs(0).exception) // Only keep the first failure
+  }
+
   val moduleGraphSbtTask =
     (sbt.Keys.update, dependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
       SbtUpdateReport.fromConfigurationReport(update.configuration(config.name).get, root)
@@ -67,7 +75,10 @@ object SievePlugin {
       val log = streams.value.log
 
       if (!(skip in sieve).value) {
-        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)), moduleGraphSbtTask.value) match {
+        val triedSieves: Try[Seq[Sieve]] = flattenTrys(sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)))
+        val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
+        val graph: ModuleGraph = moduleGraphSbtTask.value
+        triedSieves.map((sieves: Seq[Sieve]) => SieveOps.exe(deps, sieves, graph)) match {
           case Failure(_: java.net.UnknownHostException) => ()
 
           case Failure(e) =>

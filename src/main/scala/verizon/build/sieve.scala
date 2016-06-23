@@ -29,15 +29,6 @@ object Sieve {
 
   def catSieves(ss: Seq[Sieve]): Sieve = ss.foldLeft(Sieve.empty)(_ +++ _)
 
-  def fromTrys(ts: Seq[Try[Sieve]]): Try[Sieve] = flatten(ts).map(catSieves)
-
-  private def flatten[T](xs: Seq[Try[T]]): Try[Seq[T]] = {
-    val (ss: Seq[Success[T]]@unchecked, fs: Seq[Failure[T]]@unchecked) =
-      xs.partition(_.isSuccess)
-
-    if (fs.isEmpty) Success(ss map (_.get))
-    else Failure[Seq[T]](fs(0).exception) // Only keep the first failure
-  }
 }
 
 /**
@@ -115,14 +106,13 @@ object SieveOps {
   /**
    * This is the edge of the world: call this function to "run" the plugin
    */
-  def exe(ms: Seq[ModuleID], ts: Seq[Try[Sieve]], rawgraph: ModuleGraph): Try[(Seq[(Outcome, Message)], Option[RestrictionWarning])] = {
+  def exe(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[RestrictionWarning]) = {
+    val sieve = Sieve.catSieves(ts)
     val g = transpose(stripUnderscores(rawgraph))
-    for {
-      sieve <- Sieve.fromTrys(ts)
-      fos = filterAndOutcomeFns(sieve)
-      omsAndFilters = checkImmediateDeps(ms, fos)
-      warning = scanGraphForWarnings(fos)(g)
-    } yield (omsAndFilters, warning)
+    val fos = filterAndOutcomeFns(sieve)
+    val omsAndFilters = checkImmediateDeps(ms, fos)
+    val warning = scanGraphForWarnings(fos)(g)
+    (omsAndFilters, warning)
   }
 
   /**
