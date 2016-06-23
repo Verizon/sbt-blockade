@@ -78,7 +78,7 @@ object SievePlugin {
         val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
         val graph: ModuleGraph = moduleGraphSbtTask.value
-        parsedSieveItems.map((sieves: Seq[Sieve]) => SieveOps.exe(deps, sieves, graph)) match {
+        parsedSieveItems.map((sieves: Seq[Sieve]) => SieveOps.analyseDeps(deps, sieves, graph)) match {
           case Failure(_: java.net.UnknownHostException) => ()
 
           case Failure(e) =>

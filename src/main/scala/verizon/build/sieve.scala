@@ -104,9 +104,9 @@ object SieveOps {
     whites
 
   /**
-   * This is the edge of the world: call this function to "run" the plugin
+   * Given sieves, analyse immediate deps and transitive deps.
    */
-  def exe(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[RestrictionWarning]) = {
+  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[RestrictionWarning]) = {
     val sieve = Sieve.catSieves(ts)
     val g = transpose(stripUnderscores(rawgraph))
     val fos = filterAndOutcomeFns(sieve)
