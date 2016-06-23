@@ -111,7 +111,7 @@ object SieveOps {
     val g = transpose(stripUnderscores(rawgraph))
     val fos = filterAndOutcomeFns(sieve)
     val omsAndFilters = checkImmediateDeps(ms, fos)
-    val warning = scanGraphForWarnings(fos)(g)
+    val warning = findBadTransitiveDep(fos, g)
     (omsAndFilters, warning)
   }
 
@@ -124,7 +124,7 @@ object SieveOps {
     }
   }
 
-  def scanGraphForWarnings(fos: Seq[(ModuleFilter, ModuleOutcome)]): ModuleGraph => Option[RestrictionWarning] = { (g: ModuleGraph) =>
+  def findBadTransitiveDep(fos: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] = {
     val sortedIds: Seq[ModuleId] = topoSort(g)
     val edges = g.edges
 
