@@ -22,16 +22,16 @@ class SieveSpec extends FreeSpec with MustMatchers {
 
   object check {
     def apply(defined: Seq[ModuleID], expected: Seq[Outcome])(json: String) = {
-      process(defined.toList)(json).get must equal(expected.toList)
+      process(defined.toList)(json) must equal(expected.toList)
     }
 
-    def process(defined: Seq[ModuleID])(json: String): Try[Seq[Outcome]] = {
+    def process(defined: Seq[ModuleID])(json: String): Seq[Outcome] = {
       val sieve: Sieve = loadFromString(json) match {
         case Failure(_) => fail("Problem parsing test json.")
         case Success(x) => x
       }
       val fos = SieveOps.filterAndOutcomeFns(sieve)
-      checkImmediateDeps(defined, sieve, fos).map(s => s.map(_._1))
+      checkImmediateDeps(defined, sieve, fos).map(_._1)
     }
   }
 

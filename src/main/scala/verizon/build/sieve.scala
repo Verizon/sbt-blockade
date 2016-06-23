@@ -129,7 +129,7 @@ object SieveOps {
     for {
       sieve <- Sieve.fromTrys(ts)
       fos = filterAndOutcomeFns(sieve)
-      omsAndFilters <- checkImmediateDeps(ms, sieve, fos)
+      omsAndFilters = checkImmediateDeps(ms, sieve, fos)
       warning = scanGraphForWarnings(fos)(g)
     } yield (omsAndFilters, warning)
   }
@@ -137,15 +137,10 @@ object SieveOps {
   /**
    * Check immediate dependencies and compute their Outcomes and Messages.
    */
-  def checkImmediateDeps[A](ms: Seq[ModuleID], sieve: Sieve, fos: Seq[(ModuleFilter, ModuleOutcome)]): Try[Seq[(Outcome, Message)]] = {
-    for {
-      _ <- Try(())
-      oms = for {
-        (mf, of) <- fos
-        m <- ms.filter(mf).map(of)
-      } yield m
-    } yield oms
-
+  def checkImmediateDeps[A](ms: Seq[ModuleID], sieve: Sieve, fos: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(Outcome, Message)] = {
+    fos.flatMap {
+      case (mf,of) => ms.filter(mf).map(of)
+    }
   }
 
   def scanGraphForWarnings(fos: Seq[(ModuleFilter, ModuleOutcome)]): ModuleGraph => Option[RestrictionWarning] = { (g: ModuleGraph) =>
