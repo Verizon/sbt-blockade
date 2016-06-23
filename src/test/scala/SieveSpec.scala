@@ -25,8 +25,13 @@ class SieveSpec extends FreeSpec with MustMatchers {
       process(defined.toList)(json).get must equal(expected.toList)
     }
 
-    def process(defined: Seq[ModuleID])(json: String): Try[Seq[Outcome]] =
-      checkImmediateDeps(defined.toList, Seq(loadFromString(json))).map(s => s._1.map(_._1))
+    def process(defined: Seq[ModuleID])(json: String): Try[Seq[Outcome]] = {
+      val sieve: Sieve = loadFromString(json) match {
+        case Failure(_) => fail("Problem parsing test json.")
+        case Success(x) => x
+      }
+      checkImmediateDeps(defined, sieve).map(s => s._1.map(_._1))
+    }
   }
 
   "module restriction and deprecation" - {
@@ -376,11 +381,11 @@ class SieveSpec extends FreeSpec with MustMatchers {
 
   "sieve definition failure modes" - {
     "fail with a meaningful message when the sieve is invalid" in {
-      check.process(Seq(`commons-io-2.2`, `commons-codec-1.9`)) {
+      loadFromString(
         s"""
            |this will never parse
       """.stripMargin
-      }.isInstanceOf[Failure[_]] must equal(true)
+      ).isInstanceOf[Failure[_]] must equal(true)
     }
 
   }

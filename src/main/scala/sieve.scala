@@ -8,6 +8,14 @@ import net.liftweb.json._
 import sbt._
 import scala.language.reflectiveCalls
 import depgraph._
+import aux._
+
+import org.apache.ivy.plugins.version.VersionRangeMatcher
+import org.apache.ivy.core.module.id.ModuleRevisionId
+import org.apache.ivy.plugins.latest.LatestRevisionStrategy
+
+import java.text.SimpleDateFormat
+import java.util.Date
 
 case class Sieve(blacklist: List[JBlacklistedModuleFilter],
                  whitelist: List[JModuleWhitelistRangeFilter]) {
@@ -23,7 +31,6 @@ object Sieve {
 
   def fromTrys(ts: Seq[Try[Sieve]]): Try[Sieve] = flatten(ts).map(catSieves)
 
-
   private def flatten[T](xs: Seq[Try[T]]): Try[Seq[T]] = {
     val (ss: Seq[Success[T]]@unchecked, fs: Seq[Failure[T]]@unchecked) =
       xs.partition(_.isSuccess)
@@ -34,13 +41,13 @@ object Sieve {
 }
 
 /**
-  * {
-  * "organization": "commons-codec",
-  * "name": "commons-codec",
-  * "range": "[1.0,2.0]",
-  * "expiry": "2014-12-25 13:00:00"
-  * }
-  */
+ * {
+ * "organization": "commons-codec",
+ * "name": "commons-codec",
+ * "range": "[1.0,2.0]",
+ * "expiry": "2014-12-25 13:00:00"
+ * }
+ */
 sealed trait SieveModuleFilter
 
 final case class JBlacklistedModuleFilter(organization: String,
@@ -48,8 +55,6 @@ final case class JBlacklistedModuleFilter(organization: String,
                                           range: String,
                                           expiry: String) extends SieveModuleFilter {
 
-  import java.text.SimpleDateFormat
-  import java.util.Date
 
   private def expiryDateFromString(str: String): Try[Date] =
     Try(new SimpleDateFormat("yyyy-MM-dd kk:mm:ss") parse (str))
@@ -61,6 +66,9 @@ final case class JBlacklistedModuleFilter(organization: String,
   def isExpired: Boolean = !isValid
 }
 
+/**
+ * Representation of a whitelist item.
+ */
 final case class JModuleWhitelistRangeFilter(organization: String,
                                              name: String, range: String) extends SieveModuleFilter
 
@@ -75,11 +83,6 @@ final case object Ignored extends Outcome(None)
 
 object SieveOps {
 
-  import aux._
-
-  import org.apache.ivy.plugins.version.VersionRangeMatcher
-  import org.apache.ivy.core.module.id.ModuleRevisionId
-  import org.apache.ivy.plugins.latest.LatestRevisionStrategy
 
   type Message = String
   type ModuleOutcome = ModuleID => (Outcome, Message)
@@ -111,27 +114,32 @@ object SieveOps {
       b <- Try(a.extract[Sieve])
     } yield b
 
-  // Currently has an *intersection* semantics for whitelist.
-  // We likely want to change this to have *union* semantics.
+  /**
+   * Currently has an *intersection* semantics for whitelist.
+   * We likely want to change this to have *union* semantics.
+   */
   def coalesceWhites(whites: Seq[JModuleWhitelistRangeFilter]): Seq[JModuleWhitelistRangeFilter] =
     whites
 
-
   /**
-    * This is the edge of the world: call this function to "run" the plugin
-    */
+   * This is the edge of the world: call this function to "run" the plugin
+   */
   def exe(ms: Seq[ModuleID], ts: Seq[Try[Sieve]], rawgraph: ModuleGraph): Try[(Seq[(Outcome, Message)], Option[RestrictionWarning])] = {
     val g = transpose(stripUnderscores(rawgraph))
     for {
-      omsAndFilters <- checkImmediateDeps(ms, ts)
+      sieve <- Sieve.fromTrys(ts)
+      omsAndFilters <- checkImmediateDeps(ms, sieve)
       warning = scanGraphForWarnings(omsAndFilters._2)(g)
     } yield (omsAndFilters._1, warning)
   }
 
-  def checkImmediateDeps[A](ms: Seq[ModuleID], ts: Seq[Try[Sieve]]): Try[(Seq[(Outcome, Message)], Seq[(ModuleFilter, ModuleOutcome)])] = {
+  /**
+   * Check immediate dependencies and compute their Outcomes and Messages.
+   */
+  def checkImmediateDeps[A](ms: Seq[ModuleID], sieve: Sieve): Try[(Seq[(Outcome, Message)], Seq[(ModuleFilter, ModuleOutcome)])] = {
     for {
-      s <- Sieve.fromTrys(ts)
-      fos = mkFiltersAndOutcomes(s)
+      _ <- Try(())
+      fos = mkFiltersAndOutcomes(sieve)
       oms = for {
         (mf, of) <- fos
         m <- ms.filter(mf).map(of)
@@ -141,7 +149,6 @@ object SieveOps {
   }
 
   def scanGraphForWarnings(fos: Seq[(ModuleFilter, ModuleOutcome)]): ModuleGraph => Option[RestrictionWarning] = { (g: ModuleGraph) =>
-
     val sortedIds: Seq[ModuleId] = topoSort(g)
     val edges = g.edges
 
@@ -165,6 +172,9 @@ object SieveOps {
     }
   }
 
+  /**
+   * Create a ModuleFilter based on whether the restriction is a whitelist of blacklist item.
+   */
   def toModuleFilter(f: SieveModuleFilter): (ModuleFilter, ModuleOutcome) = f match {
     case f: JBlacklistedModuleFilter => (
       (m: ModuleID) =>
