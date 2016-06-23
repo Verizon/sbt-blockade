@@ -129,7 +129,7 @@ object SieveOps {
     for {
       sieve <- Sieve.fromTrys(ts)
       fos = filterAndOutcomeFns(sieve)
-      omsAndFilters = checkImmediateDeps(ms, sieve, fos)
+      omsAndFilters = checkImmediateDeps(ms, fos)
       warning = scanGraphForWarnings(fos)(g)
     } yield (omsAndFilters, warning)
   }
@@ -137,7 +137,7 @@ object SieveOps {
   /**
    * Check immediate dependencies and compute their Outcomes and Messages.
    */
-  def checkImmediateDeps[A](ms: Seq[ModuleID], sieve: Sieve, fos: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(Outcome, Message)] = {
+  def checkImmediateDeps[A](ms: Seq[ModuleID], fos: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(Outcome, Message)] = {
     fos.flatMap {
       case (mf,of) => ms.filter(mf).map(of)
     }
