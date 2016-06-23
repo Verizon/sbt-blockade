@@ -19,12 +19,12 @@ object SieveKeys {
 object SievePlugin {
 
   import SieveKeys._
-  import SieveOps._
   import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
   import scala.util.{Try, Failure, Success}
 
   import scala.io.Source
   import aux._
+  import SieveOps._
 
   def display(name: String, so: Seq[(Outcome, Message)]): String = {
     CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
@@ -67,7 +67,7 @@ object SievePlugin {
       val log = streams.value.log
 
       if (!(skip in sieve).value) {
-        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map(loadFromURL), moduleGraphSbtTask.value) match {
+        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map((sieveio.loadFromURL _).andThen(_.flatMap(SieveOps.parseSieve))), moduleGraphSbtTask.value) match {
           case Failure(_: java.net.UnknownHostException) => ()
 
           case Failure(e) =>

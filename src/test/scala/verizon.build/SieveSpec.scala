@@ -26,7 +26,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
     }
 
     def process(defined: Seq[ModuleID])(json: String): Seq[Outcome] = {
-      val sieve: Sieve = loadFromString(json) match {
+      val sieve: Sieve = SieveOps.parseSieve(json) match {
         case Failure(_) => fail("Problem parsing test json.")
         case Success(x) => x
       }
@@ -382,7 +382,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
 
   "sieve definition failure modes" - {
     "fail with a meaningful message when the sieve is invalid" in {
-      loadFromString(
+      SieveOps.parseSieve(
         s"""
            |this will never parse
       """.stripMargin

@@ -83,7 +83,6 @@ final case object Ignored extends Outcome(None)
 
 object SieveOps {
 
-
   type Message = String
   type ModuleOutcome = ModuleID => (Outcome, Message)
 
@@ -99,16 +98,8 @@ object SieveOps {
   private def messageWithRange(r: String): String =
     s"Module not within the inclusion range '$r'."
 
-  def loadFromURL(url: String): Try[Sieve] =
-    loadFromURL(new URL(url))
 
-  def loadFromURL(url: URL): Try[Sieve] =
-    for {
-      a <- Try(Source.fromURL(url))
-      b <- loadFromString(a.mkString)
-    } yield b
-
-  def loadFromString(json: String): Try[Sieve] =
+  def parseSieve(json: String): Try[Sieve] =
     for {
       a <- Try(parse(json))
       b <- Try(a.extract[Sieve])
