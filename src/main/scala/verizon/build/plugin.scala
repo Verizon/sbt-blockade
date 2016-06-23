@@ -75,10 +75,10 @@ object SievePlugin {
       val log = streams.value.log
 
       if (!(skip in sieve).value) {
-        val triedSieves: Try[Seq[Sieve]] = flattenTrys(sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)))
+        val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
         val graph: ModuleGraph = moduleGraphSbtTask.value
-        triedSieves.map((sieves: Seq[Sieve]) => SieveOps.exe(deps, sieves, graph)) match {
+        parsedSieveItems.map((sieves: Seq[Sieve]) => SieveOps.exe(deps, sieves, graph)) match {
           case Failure(_: java.net.UnknownHostException) => ()
 
           case Failure(e) =>
