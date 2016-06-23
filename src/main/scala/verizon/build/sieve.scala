@@ -111,7 +111,7 @@ object SieveOps {
     val g = transpose(stripUnderscores(rawgraph))
     val fos = filterAndOutcomeFns(sieve)
     val omsAndFilters = checkImmediateDeps(ms, fos)
-    val warning = findBadTransitiveDep(fos, g)
+    val warning = findTransitiveWarning(fos, g)
     (omsAndFilters, warning)
   }
 
@@ -124,10 +124,17 @@ object SieveOps {
     }
   }
 
-  def findBadTransitiveDep(fos: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] =
-    warningWithPath(topoSort(g), fos, g.edges)
+  def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] = {
+    val sortedIds = topoSort(g)
+    findRestrictedTransitiveDep(sortedIds, restrictions).map {
+      case (badModuleId, message) =>
+        val pathFromBadDepToRoot = getPathToRoot(sortedIds.dropWhile(_ != badModuleId), badModuleId, g.edges)
+        RestrictionWarning(pathFromBadDepToRoot, message)
+    }
+  }
 
-  def f(sortedNodes: Seq[ModuleId], restrictions: Seq[(ModuleFilter, ModuleOutcome)]) = {
+  def findRestrictedTransitiveDep(sortedNodes: Seq[ModuleId],
+                                  restrictions: Seq[(ModuleFilter, ModuleOutcome)]): Option[(ModuleId, SieveOps.Message)] = {
     sortedNodes.map { id =>
       restrictions.map {
         case (mf, of) =>
@@ -136,23 +143,6 @@ object SieveOps {
           else None
       }.flatten.headOption
     }.flatten.headOption
-  }
-
-  def warningWithPath(sortedIds: Seq[ModuleId], fos: Seq[(ModuleFilter, ModuleOutcome)], edges: Seq[Edge]): Option[RestrictionWarning] = {
-    val x: Option[(ModuleId, SieveOps.Message)] = sortedIds.map { id =>
-      fos.map {
-        case (mf, of) =>
-          val ID = toModuleID(id)
-          if (mf(ID)) Some((id, of(ID)._2))
-          else None
-      }.flatten.headOption
-    }.flatten.headOption
-
-    x.map {
-      case (badModuleId, message) =>
-        RestrictionWarning(
-          getPathToRoot(sortedIds.dropWhile(_ != badModuleId), badModuleId, edges), message)
-    }
   }
 
   /**

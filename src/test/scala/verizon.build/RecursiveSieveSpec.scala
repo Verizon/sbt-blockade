@@ -28,11 +28,11 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
         (id: ModuleID) => toModuleId(id) == toModuleId(`shapeless-2.2.5`),
         (id: ModuleID) => (Restricted(id), "some message")
         )
-      def fos = Seq(fo)
+      def constraints = Seq(fo)
       "returns a representation of a warning that contains the path to the nested dep" in {
-        val sortedIdsBottomUp = topoSort(graphWithNestedShapeless).reverse
+        val transposed = transpose(graphWithNestedShapeless)
 
-        warningWithPath(sortedIdsBottomUp, fos, transpose(graphWithNestedShapeless).edges).get.fromCauseToRoot.toList mustBe
+        findTransitiveWarning(constraints, transposed).get.fromCauseToRoot.toList mustBe
           List(
             toModuleId(`shapeless-2.2.5`),
             toModuleId(`doobie-core-0.2.3`),
