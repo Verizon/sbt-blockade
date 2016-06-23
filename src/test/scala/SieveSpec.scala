@@ -31,7 +31,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
         case Success(x) => x
       }
       val fos = SieveOps.filterAndOutcomeFns(sieve)
-      checkImmediateDeps(defined, sieve, fos).map(s => s._1.map(_._1))
+      checkImmediateDeps(defined, sieve, fos).map(s => s.map(_._1))
     }
   }
 
