@@ -30,7 +30,8 @@ class SieveSpec extends FreeSpec with MustMatchers {
         case Failure(_) => fail("Problem parsing test json.")
         case Success(x) => x
       }
-      checkImmediateDeps(defined, sieve).map(s => s._1.map(_._1))
+      val fos = SieveOps.filterAndOutcomeFns(sieve)
+      checkImmediateDeps(defined, sieve, fos).map(s => s._1.map(_._1))
     }
   }
 

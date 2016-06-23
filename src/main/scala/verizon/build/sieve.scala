@@ -90,7 +90,7 @@ object SieveOps {
   private implicit val formats: Formats = DefaultFormats
   private val matcher = new VersionRangeMatcher("range", new LatestRevisionStrategy)
 
-  def mkFiltersAndOutcomes(s: Sieve): Seq[(ModuleFilter, ModuleOutcome)] =
+  def filterAndOutcomeFns(s: Sieve): Seq[(ModuleFilter, ModuleOutcome)] =
     s.blacklist.map(toModuleFilter) ++ s.whitelist.map(toModuleFilter)
 
   private def messageWithRange(r: String, e: String): String =
@@ -128,7 +128,8 @@ object SieveOps {
     val g = transpose(stripUnderscores(rawgraph))
     for {
       sieve <- Sieve.fromTrys(ts)
-      omsAndFilters <- checkImmediateDeps(ms, sieve)
+      fos = filterAndOutcomeFns(sieve)
+      omsAndFilters <- checkImmediateDeps(ms, sieve, fos)
       warning = scanGraphForWarnings(omsAndFilters._2)(g)
     } yield (omsAndFilters._1, warning)
   }
@@ -136,10 +137,9 @@ object SieveOps {
   /**
    * Check immediate dependencies and compute their Outcomes and Messages.
    */
-  def checkImmediateDeps[A](ms: Seq[ModuleID], sieve: Sieve): Try[(Seq[(Outcome, Message)], Seq[(ModuleFilter, ModuleOutcome)])] = {
+  def checkImmediateDeps[A](ms: Seq[ModuleID], sieve: Sieve, fos: Seq[(ModuleFilter, ModuleOutcome)]): Try[(Seq[(Outcome, Message)], Seq[(ModuleFilter, ModuleOutcome)])] = {
     for {
       _ <- Try(())
-      fos = mkFiltersAndOutcomes(sieve)
       oms = for {
         (mf, of) <- fos
         m <- ms.filter(mf).map(of)

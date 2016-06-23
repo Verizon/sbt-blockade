@@ -85,4 +85,3 @@ object aux {
     go(g, Seq.empty)
   }
 }
-
