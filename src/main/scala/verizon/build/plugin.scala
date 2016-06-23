@@ -29,8 +29,8 @@ object SievePlugin {
   def display(name: String, so: Seq[(Outcome, Message)]): String = {
     CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
       so.distinct.map {
-        case (Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
-        case (Deprecated(m), msg) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
+        case (Outcome.Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
+        case (Outcome.Deprecated(m), msg) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
         case (o, m) => "Unkonwn input to sieve display."
       }.mkString("\n\t", ",\n\t", "")
   }

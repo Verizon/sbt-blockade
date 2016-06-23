@@ -31,7 +31,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
         case Success(x) => x
       }
       val fos = SieveOps.filterAndOutcomeFns(sieve)
-      checkImmediateDeps(defined, fos).map(_._1)
+      analyseImmediateDeps(defined, fos).map(_._1)
     }
   }
 
@@ -60,7 +60,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
        val `scalaz-7.0.4` = "org.scalaz" %% "scalaz-core" % "7.0.4"
        check(
          defined = Seq(`scalaz-7.0.4`),
-         expected = Seq(Restricted(`scalaz-7.0.4`))) {
+         expected = Seq(Outcome.Restricted(`scalaz-7.0.4`))) {
          s"""
             |{
             |  "whitelist": [
@@ -80,7 +80,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
         val `scalaz-7.2.0` = "org.scalaz" %% "scalaz-core" % "7.2.0"
         check(
           defined = Seq(`scalaz-7.2.0`),
-          expected = Seq(Restricted(`scalaz-7.2.0`))) {
+          expected = Seq(Outcome.Restricted(`scalaz-7.2.0`))) {
           s"""
              |{
              |  "whitelist": [
@@ -100,7 +100,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
       "available 1, deprecate 1, restrict 0, ignore 0" in {
         check(
           defined = Seq(`commons-codec-1.9`),
-          expected = Seq(Deprecated(`commons-codec-1.9`))) {
+          expected = Seq(Outcome.Deprecated(`commons-codec-1.9`))) {
           s"""
              |{
              |  "whitelist": [],
@@ -120,7 +120,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
       "available 1, deprecate 0, restrict 1, ignore 0" in {
         check(
           defined = Seq(`commons-codec-1.9`),
-          expected = Seq(Restricted(`commons-codec-1.9`))) {
+          expected = Seq(Outcome.Restricted(`commons-codec-1.9`))) {
           s"""
              |{
              |  "whitelist": [],
@@ -140,7 +140,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
       "available 2, deprecate 1, restrict 0, ignore 0" in {
         check(
           defined = Seq(`commons-io-2.2`, `commons-codec-1.9`),
-          expected = Seq(Deprecated(`commons-codec-1.9`))) {
+          expected = Seq(Outcome.Deprecated(`commons-codec-1.9`))) {
           s"""
              |{
              |  "whitelist": [],
@@ -220,7 +220,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
       "available 1, deprecate 0, restrict 1, ignore 0 with dynamic version defined and fixed lower bound" in {
         check(
           defined = Seq(`funnel-1.3.+`),
-          expected = Seq(Restricted(`funnel-1.3.+`))) {
+          expected = Seq(Outcome.Restricted(`funnel-1.3.+`))) {
           s"""
              |{
              |  "whitelist": [],
@@ -260,7 +260,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
       "available 2, deprecate 0, restrict 1, ignore 0" in {
         check(
           defined = Seq(`commons-io-2.2`, `commons-codec-1.9`),
-          expected = Seq(Restricted(`commons-codec-1.9`))) {
+          expected = Seq(Outcome.Restricted(`commons-codec-1.9`))) {
           s"""
              |{
              |  "whitelist": [],
@@ -285,7 +285,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
             `commons-lang-2.2`, // deprecate (within range, expires tomorrow)
             `commons-io-2.2` // restrict  (less than the restricted rage)
           ),
-          expected = Seq(Restricted(`commons-io-2.2`), Deprecated(`commons-lang-2.2`))) {
+          expected = Seq(Outcome.Restricted(`commons-io-2.2`), Outcome.Deprecated(`commons-lang-2.2`))) {
           s"""
              |{
              |  "whitelist": [],
@@ -331,9 +331,9 @@ class SieveSpec extends FreeSpec with MustMatchers {
             `commons-io-2.2` // restrict  (less than the restricted rage)
           ),
           expected = Seq(
-            Restricted(`commons-io-2.2`),
-            Deprecated(`commons-lang-2.2`),
-            Restricted(`commons-codec-1.9`)
+            Outcome.Restricted(`commons-io-2.2`),
+            Outcome.Deprecated(`commons-lang-2.2`),
+            Outcome.Restricted(`commons-codec-1.9`)
           )) {
           s"""
              |{

@@ -26,7 +26,7 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
     "given a restricted transitive dependency" - {
       val fo: (ModuleFilter, ModuleOutcome) = (
         (id: ModuleID) => toModuleId(id) == toModuleId(`shapeless-2.2.5`),
-        (id: ModuleID) => (Restricted(id), "some message")
+        (id: ModuleID) => (Outcome.Restricted(id), "some message")
         )
       def constraints = Seq(fo)
       "returns a representation of a warning that contains the path to the nested dep" in {

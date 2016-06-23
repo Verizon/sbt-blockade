@@ -31,7 +31,12 @@ object Sieve {
 
 }
 
+sealed trait SieveModuleFilter
+
 /**
+ * Scala representation of blacklist item that is parsed from JSON.
+ *
+ * Example:
  * {
  * "organization": "commons-codec",
  * "name": "commons-codec",
@@ -39,8 +44,6 @@ object Sieve {
  * "expiry": "2014-12-25 13:00:00"
  * }
  */
-sealed trait SieveModuleFilter
-
 final case class JBlacklistedModuleFilter(organization: String,
                                           name: String,
                                           range: String,
@@ -58,19 +61,40 @@ final case class JBlacklistedModuleFilter(organization: String,
 }
 
 /**
- * Representation of a whitelist item.
+ * Scala representation of whitelist item that is parsed from JSON.
+ *
+ * Example:
+ * {
+ * "organization": "commons-codec",
+ * "name": "commons-codec",
+ * "range": "[1.0,2.0]"
+ * }
  */
 final case class JModuleWhitelistRangeFilter(organization: String,
                                              name: String, range: String) extends SieveModuleFilter
 
-abstract class Outcome(val underlying: Option[ModuleID],
-                       val raisesError: Boolean = false)
+trait Outcome {
+  def underlying: Option[ModuleID]
+  def raisesError: Boolean
+}
 
-final case class Restricted(module: ModuleID) extends Outcome(Option(module), true)
+object Outcome {
+  final case class Restricted(module: ModuleID) extends Outcome {
+    override val underlying: Option[ModuleID] = Option(module)
+    override def raisesError: Boolean = true
+  }
 
-final case class Deprecated(module: ModuleID) extends Outcome(Option(module))
+  final case class Deprecated(module: ModuleID) extends Outcome {
+    override def underlying: Option[ModuleID] = Option(module)
+    override def raisesError: Boolean = false
+  }
 
-final case object Ignored extends Outcome(None)
+  final case object Ignored extends Outcome {
+    override def underlying: Option[ModuleID] = None
+    override def raisesError: Boolean = false
+  }
+}
+
 
 object SieveOps {
 
@@ -110,19 +134,18 @@ object SieveOps {
     val sieve = Sieve.catSieves(ts)
     val g = transpose(stripUnderscores(rawgraph))
     val fos = filterAndOutcomeFns(sieve)
-    val omsAndFilters = checkImmediateDeps(ms, fos)
+    val omsAndFilters = analyseImmediateDeps(ms, fos)
     val warning = findTransitiveWarning(fos, g)
     (omsAndFilters, warning)
   }
 
   /**
-   * Check immediate dependencies and compute their Outcomes and Messages.
+   *  Given constraints, analyse immediate deps.
    */
-  def checkImmediateDeps[A](ms: Seq[ModuleID], fos: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(Outcome, Message)] = {
-    fos.flatMap {
-      case (mf,of) => ms.filter(mf).map(of)
-    }
-  }
+  def analyseImmediateDeps[A](ms: Seq[ModuleID], constraints: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(Outcome, Message)] = for {
+    (mf,of) <- constraints
+    m <- ms.filter(mf).map(of)
+  } yield m
 
   def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] = {
     val sortedIds = topoSort(g)
@@ -133,6 +156,9 @@ object SieveOps {
     }
   }
 
+  /**
+   * Given constraints, find a transitive dependency in the DAG that does not satisfy the constaints.
+   */
   def findRestrictedTransitiveDep(sortedNodes: Seq[ModuleId],
                                   restrictions: Seq[(ModuleFilter, ModuleOutcome)]): Option[(ModuleId, SieveOps.Message)] = {
     sortedNodes.map { id =>
@@ -146,7 +172,7 @@ object SieveOps {
   }
 
   /**
-   * Create a ModuleFilter based on whether the restriction is a whitelist of blacklist item.
+   * Create a ModuleFilter from a whitelist or blacklist item.
    */
   def toModuleFilter(f: SieveModuleFilter): (ModuleFilter, ModuleOutcome) = f match {
     case f: JBlacklistedModuleFilter => (
@@ -156,7 +182,7 @@ object SieveOps {
           matcher.accept(
             ModuleRevisionId.newInstance(f.organization, f.name, f.range),
             ModuleRevisionId.newInstance(m.organization, m.name, m.revision)),
-      (m: ModuleID) => (if (f.isExpired) Restricted(m) else Deprecated(m), messageWithRange(f.range, f.expiry))
+      (m: ModuleID) => (if (f.isExpired) Outcome.Restricted(m) else Outcome.Deprecated(m), messageWithRange(f.range, f.expiry))
       )
     case f: JModuleWhitelistRangeFilter => (
       (m: ModuleID) =>
@@ -165,7 +191,7 @@ object SieveOps {
           !matcher.accept(
             ModuleRevisionId.newInstance(f.organization, f.name, f.range),
             ModuleRevisionId.newInstance(m.organization, m.name, m.revision)),
-      (m: ModuleID) => (Restricted(m), messageWithRange(f.range))
+      (m: ModuleID) => (Outcome.Restricted(m), messageWithRange(f.range))
       )
   }
 
