@@ -124,12 +124,7 @@ object SieveOps {
     }
   }
 
-  def findBadTransitiveDep(fos: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] = {
-    val sortedIds: Seq[ModuleId] = topoSort(g)
-    val edges = g.edges
-
-    warningWithPath(sortedIds, fos, edges)
-  }
+  def findBadTransitiveDep(fos: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] = warningWithPath(topoSort(g), fos, g.edges)
 
   def warningWithPath(sortedIds: Seq[ModuleId], fos: Seq[(ModuleFilter, ModuleOutcome)], edges: Seq[Edge]): Option[RestrictionWarning] = {
     val x: Option[(ModuleId, SieveOps.Message)] = sortedIds.map { id =>
