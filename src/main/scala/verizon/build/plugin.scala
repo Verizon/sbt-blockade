@@ -67,7 +67,7 @@ object SievePlugin {
       val log = streams.value.log
 
       if (!(skip in sieve).value) {
-        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map((sieveio.loadFromURL _).andThen(_.flatMap(SieveOps.parseSieve))), moduleGraphSbtTask.value) match {
+        SieveOps.exe((libraryDependencies in Compile).value, sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)), moduleGraphSbtTask.value) match {
           case Failure(_: java.net.UnknownHostException) => ()
 
           case Failure(e) =>

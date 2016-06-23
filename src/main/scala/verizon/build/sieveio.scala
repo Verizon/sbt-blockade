@@ -17,6 +17,4 @@ object sieveio {
 
   def loadFromURL(url: URL): Try[JsonAsString] =
     Try(Source.fromURL(url)).map(_.toString)
-
-
 }
