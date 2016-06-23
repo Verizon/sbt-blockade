@@ -3,6 +3,7 @@ package verizon.build
 import sbt.impl.DependencyBuilders
 import java.net.URL
 import depgraph._
+import SieveOps._
 
 object Fixtures extends DependencyBuilders {
   def load(p: String): URL =
@@ -18,9 +19,6 @@ object Fixtures extends DependencyBuilders {
   val `commons-net-3.3` = commons("net", "3.3")
   val `funnel-1.3.71` = "intelmedia.ws.funnel" %% "http" % "1.3.71"
   val `funnel-1.3.+` = "intelmedia.ws.funnel" %% "http" % "1.3.+"
-
-
-  import aux._
 
 
   val `toplevel-has-direct-dep-on-scalaz` = "org.foo" %% "has-direct-dep-on-scalaz" % "1.2.4"

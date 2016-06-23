@@ -6,7 +6,6 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
 
   import sbt.{ModuleFilter, ModuleID}
   import Fixtures._
-  import aux._
   import depgraph._
   import SieveOps._
 

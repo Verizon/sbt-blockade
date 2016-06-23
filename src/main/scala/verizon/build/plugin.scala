@@ -23,19 +23,10 @@ object SievePlugin {
   import scala.util.{Try, Failure, Success}
 
   import scala.io.Source
-  import aux._
   import SieveOps._
 
-  def display(name: String, so: Seq[(Outcome, Message)]): String = {
-    CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
-      so.distinct.map {
-        case (Outcome.Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
-        case (Outcome.Deprecated(m), msg) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
-        case (o, m) => "Unkonwn input to sieve display."
-      }.mkString("\n\t", ",\n\t", "")
-  }
 
-  private def dependenciesOK(name: String, transitive: Boolean = false) =
+  private def dependenciesOK(name: String, transitive: Boolean = false): String =
     GREEN + s"[$name] All ${if (transitive) "transitive " else "direct"} dependencies are within current restrictions." + RESET
 
   private def writeCheckFile(f: File, period: Duration): Unit = {
@@ -90,7 +81,7 @@ object SievePlugin {
                 writeCheckFile(cacheFile.value, enforcementInterval.value)
                 log.info(dependenciesOK(name.value))
               case list => {
-                log.warn(display(name.value, list))
+                log.warn(displayImmediateDepResults(name.value, list))
                 if (list.exists(_._1.raisesError == true))
                   sys.error("One or more of the specified immediate dependencies are restricted.")
                 else ()
