@@ -7,27 +7,34 @@ import depgraph._
 
 object SieveKeys {
 
-  import java.net.URL
+  import java.net.URI
 
   val enforcementInterval = SettingKey[Duration]("sieve-enforcement-interval")
   val cacheFile = SettingKey[File]("sieve-cache-file")
-  val sieves = SettingKey[Seq[URL]]("sieve-urls")
+  val sieveUris = SettingKey[Seq[URI]]("sieve-uris")
   val sieve = TaskKey[Unit]("sieve")
   val dependencyGraphCrossProjectId = SettingKey[ModuleID]("dependency-graph-cross-project-id")
 }
 
-object SievePlugin {
-
+object SievePlugin extends AutoPlugin { self =>
   import SieveKeys._
+
+  /** sbt auto-plugin stuffs **/
+  override def trigger = allRequirements
+  override lazy val projectSettings = self.settings
+  override lazy val globalSettings: Seq[Setting[_]] = Seq(
+    sieveUris := Nil
+  )
+
+  /** actual plugin content **/
   import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
   import scala.util.{Try, Failure, Success}
 
   import scala.io.Source
   import SieveOps._
 
-
   private def dependenciesOK(name: String, transitive: Boolean = false): String =
-    GREEN + s"[$name] All ${if (transitive) "transitive " else "direct"} dependencies are within current restrictions." + RESET
+    GREEN + s"[$name] All ${if (transitive) "transitive" else "direct"} dependencies are within current restrictions." + RESET
 
   private def writeCheckFile(f: File, period: Duration): Unit = {
     val contents = System.nanoTime + period.toNanos
@@ -57,7 +64,7 @@ object SievePlugin {
     dependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
     cacheFile := target.value / "sieved",
     enforcementInterval := 30.minutes,
-    sieves := Seq.empty,
+    sieveUris := Seq.empty,
     skip in sieve := {
       val f = cacheFile.value
       if (f.exists) readCheckFile(f) else false
@@ -67,7 +74,7 @@ object SievePlugin {
 
       // If the project has not been sieved recently, we attempt to sieve and display results.
       if (!(skip in sieve).value) {
-        val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)))
+        val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieveUris.value.map(url => sieveio.loadFromURI(url).flatMap(SieveOps.parseSieve)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
         val graph: ModuleGraph = moduleGraphSbtTask.value
         parsedSieveItems.map((sieves: Seq[Sieve]) => SieveOps.analyseDeps(deps, sieves, graph)) match {
