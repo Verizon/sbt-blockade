@@ -1,27 +1,23 @@
 package verizon.build
 
-import scala.io.Source
-import java.io.File
-import java.net.URL
-import scala.util.{Try, Failure, Success}
-import net.liftweb.json._
-import sbt._
-import scala.language.reflectiveCalls
-import depgraph._
-
 import org.apache.ivy.plugins.version.VersionRangeMatcher
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.plugins.latest.LatestRevisionStrategy
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import sbt._
-import scala.language.reflectiveCalls
 import java.io.File
-import scala.collection.mutable.{MultiMap, HashMap, Set}
+import java.net.URL
+import java.util.Date
+import scala.io.Source
+import java.text.SimpleDateFormat
+import scala.language.reflectiveCalls
 import sbinary.{Format, DefaultProtocol}
-import depgraph._
+import scala.util.{Try, Failure, Success}
 import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
+import scala.collection.mutable.{MultiMap, HashMap, Set}
+
+import sbt._
+import depgraph._
+import net.liftweb.json._
 
 /**
  * Represents a collection of whitelist and blacklist constraints.

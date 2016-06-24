@@ -98,4 +98,21 @@ Whitelist items are similar to blacklist items, except that they are effective i
 }
 
 ```
-The `range` field is specified using [Ivy Version Matchers](http://ant.apache.org/ivy/history/2.1.0/settings/version-matchers.html).
+The `range` field is specified using [Ivy Version Matchers](http://ant.apache.org/ivy/history/2.1.0/settings/version-matchers.html); here's a generic guideline:
+
+```
+Revision  Matches
+[1.0,2.0] all versions greater or equal to 1.0 and lower or equal to 2.0
+[1.0,2.0[ all versions greater or equal to 1.0 and lower than 2.0
+]1.0,2.0] all versions greater than 1.0 and lower or equal to 2.0
+]1.0,2.0[ all versions greater than 1.0 and lower than 2.0
+[1.0,)  all versions greater or equal to 1.0
+]1.0,)  all versions greater than 1.0
+(,2.0]  all versions lower or equal to 2.0
+(,2.0[  all versions lower than 2.0
+
+
+Revision  Matches
+1.0.+ all revisions starting with '1.0.', like 1.0.1, 1.0.5, 1.0.a
+1.1+  all revisions starting with '1.1', like 1.1, 1.1.5, but also 1.10, 1.11
+```

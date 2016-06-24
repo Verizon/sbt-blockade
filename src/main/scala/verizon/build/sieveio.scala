@@ -5,7 +5,7 @@
 package verizon.build
 
 import scala.util.Try
-import java.net.URL
+import java.net.URI
 import scala.io.Source
 import net.liftweb.json._
 
@@ -13,8 +13,8 @@ object sieveio {
   type JsonAsString = String
 
   def loadFromURLString(url: String): Try[JsonAsString] =
-    loadFromURL(new URL(url))
+    loadFromURI(new URI(url))
 
-  def loadFromURL(url: URL): Try[JsonAsString] =
-    Try(Source.fromURL(url)).map(_.mkString)
+  def loadFromURI(uri: URI): Try[JsonAsString] =
+    Try(Source.fromURL(uri.toURL)).map(_.mkString)
 }
