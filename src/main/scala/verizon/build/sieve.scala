@@ -92,16 +92,30 @@ trait Outcome {
 }
 
 object Outcome {
+
+  /**
+   * Restricted immediate dependency result.
+   *
+   * @param module
+   */
   final case class Restricted(module: ModuleID) extends Outcome {
     override val underlying: Option[ModuleID] = Option(module)
     override def raisesError: Boolean = true
   }
 
+  /**
+   * Deprecated immediate dependency result.
+   *
+   * @param module
+   */
   final case class Deprecated(module: ModuleID) extends Outcome {
     override def underlying: Option[ModuleID] = Option(module)
     override def raisesError: Boolean = false
   }
 
+  /**
+   * Ignored immediate dependency result.
+   */
   final case object Ignored extends Outcome {
     override def underlying: Option[ModuleID] = None
     override def raisesError: Boolean = false
@@ -157,7 +171,7 @@ object SieveOps {
    */
   def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
     val sieve = Sieve.catSieves(ts)
-    val g = transpose(stripUnderscores(rawgraph))
+    val g = GraphOps.transpose(stripUnderscores(rawgraph))
     val fos = filterAndOutcomeFns(sieve)
     val omsAndFilters = analyseImmediateDeps(ms, fos)
     val warning = findTransitiveWarning(fos, g)
@@ -177,46 +191,12 @@ object SieveOps {
   } yield m
 
   def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[TransitiveWarning] = {
-    val sortedIds = topoSort(g)
+    val sortedIds = GraphOps.topoSort(g)
     findRestrictedTransitiveDep(sortedIds, restrictions).map {
       case (badModuleId, message) =>
         val pathFromBadDepToRoot = getPathToRoot(sortedIds.dropWhile(_ != badModuleId), badModuleId, g.edges)
         TransitiveWarning(pathFromBadDepToRoot, message)
     }
-  }
-
-  /**
-   * Make the arrows go in the opposite direction.
-   *
-   * @param g
-   * @return
-   */
-  def transpose(g: ModuleGraph): ModuleGraph =
-    g.copy(edges = g.edges.map { case (from, to) => (to, from) })
-
-  /**
-   * Topological sort a ModuleGraph.
-   *
-   * @param g
-   * @return
-   */
-  def topoSort(g: ModuleGraph): Seq[ModuleId] = {
-    def removeNodes(g: ModuleGraph, nodesForRemovalIds: Seq[ModuleId]): ModuleGraph = {
-      val updatedNodes = g.nodes.filter(n => !nodesForRemovalIds.contains(n.id))
-      val updatedEdges = g.edges.filter(e => !nodesForRemovalIds.contains(e._1))
-
-      ModuleGraph(updatedNodes, updatedEdges)
-    }
-
-    def go(curGraph: ModuleGraph, acc: Seq[ModuleId]): Seq[ModuleId] = {
-      if (curGraph.isEmpty) acc
-      else {
-        val roots = curGraph.roots.map(_.id)
-        go(removeNodes(curGraph, roots), acc ++ roots)
-      }
-    }
-
-    go(g, Seq.empty)
   }
 
   /**
@@ -338,3 +318,42 @@ object SieveOps {
   }
 
 }
+
+object GraphOps {
+  /**
+   * Make the arrows go in the opposite direction.
+   *
+   * @param g
+   * @return
+   */
+  def transpose(g: ModuleGraph): ModuleGraph =
+    g.copy(edges = g.edges.map { case (from, to) => (to, from) })
+
+  /**
+   * Topological sort a ModuleGraph.
+   *
+   * @param g
+   * @return
+   */
+  def topoSort(g: ModuleGraph): Seq[ModuleId] = {
+    def removeNodes(g: ModuleGraph, nodesForRemovalIds: Seq[ModuleId]): ModuleGraph = {
+      val updatedNodes = g.nodes.filter(n => !nodesForRemovalIds.contains(n.id))
+      val updatedEdges = g.edges.filter(e => !nodesForRemovalIds.contains(e._1))
+
+      ModuleGraph(updatedNodes, updatedEdges)
+    }
+
+    def go(curGraph: ModuleGraph, acc: Seq[ModuleId]): Seq[ModuleId] = {
+      if (curGraph.isEmpty) acc
+      else {
+        val roots = curGraph.roots.map(_.id)
+        go(removeNodes(curGraph, roots), acc ++ roots)
+      }
+    }
+
+    go(g, Seq.empty)
+  }
+
+
+}
+

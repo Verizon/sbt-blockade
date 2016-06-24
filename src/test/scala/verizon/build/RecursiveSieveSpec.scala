@@ -11,7 +11,7 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
 
   "given a dependency graph" - {
     "can topo sort the graph" in {
-      topoSort(graphWithNestedShapeless).toList mustBe List(
+      GraphOps.topoSort(graphWithNestedShapeless).toList mustBe List(
         toModuleId(`toplevel-has-direct-dep-on-scalaz`),
         toModuleId(`toplevel-has-trans-dep-on-shapeless`),
         toModuleId(`doobie-core-0.2.3`),
@@ -29,7 +29,7 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
         )
       def constraints = Seq(fo)
       "returns a representation of a warning that contains the path to the nested dep" in {
-        val transposed = transpose(graphWithNestedShapeless)
+        val transposed = GraphOps.transpose(graphWithNestedShapeless)
 
         findTransitiveWarning(constraints, transposed).get.fromCauseToRoot.toList mustBe
           List(
