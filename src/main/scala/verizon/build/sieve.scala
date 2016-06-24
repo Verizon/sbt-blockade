@@ -56,6 +56,11 @@ sealed trait SieveModuleFilter
  * "range": "[1.0,2.0]",
  * "expiry": "2014-12-25 13:00:00"
  * }
+ *
+ * @param range
+ * @param expiry
+ * @param name
+ * @param organization
  */
 final case class JBlacklistedModuleFilter(organization: String,
                                           name: String,
@@ -82,6 +87,10 @@ final case class JBlacklistedModuleFilter(organization: String,
  * "name": "commons-codec",
  * "range": "[1.0,2.0]"
  * }
+ *
+ * @param range
+ * @param name
+ * @param organization
  */
 final case class JModuleWhitelistRangeFilter(organization: String,
                                              name: String, range: String) extends SieveModuleFilter
@@ -170,11 +179,20 @@ object SieveOps {
    * @param ts
    */
   def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
-    val sieve = Sieve.catSieves(ts)
-    val g = GraphOps.transpose(stripUnderscores(rawgraph))
-    val fos = filterAndOutcomeFns(sieve)
-    val omsAndFilters = analyseImmediateDeps(ms, fos)
-    val warning = findTransitiveWarning(fos, g)
+    val fos = {
+      val sieve = Sieve.catSieves(ts)
+      filterAndOutcomeFns(sieve)
+    }
+
+    val omsAndFilters =
+      analyseImmediateDeps(ms, fos)
+
+    val warning = {
+      // We transpose the graph so that *depended-upon* things point to *dependent* things.
+      val g = GraphOps.transpose(stripUnderscores(rawgraph))
+      findTransitiveWarning(fos, g)
+    }
+
     (omsAndFilters, warning)
   }
 
@@ -190,11 +208,26 @@ object SieveOps {
     m <- ms.filter(mf).map(of)
   } yield m
 
+  /**
+   * Search the graph to find a restricted transitive dependency and return info associated with it.
+   *
+   * @param restrictions
+   * @param g
+   * @return
+   */
   def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[TransitiveWarning] = {
+    // Topological sort the id nodes.
     val sortedIds = GraphOps.topoSort(g)
+
+    // Attempt to find a restricted id node.
     findRestrictedTransitiveDep(sortedIds, restrictions).map {
       case (badModuleId, message) =>
+
+        // If we find a restricted id node, we find a path from an immediate dependency to that node,
+        // so that users know where the offending module resides.
         val pathFromBadDepToRoot = getPathToRoot(sortedIds.dropWhile(_ != badModuleId), badModuleId, g.edges)
+
+        // Return a representation of the collected info.
         TransitiveWarning(pathFromBadDepToRoot, message)
     }
   }
@@ -265,7 +298,13 @@ object SieveOps {
     )
   }
 
-
+  /**
+   * Contains info associated with a restricted transitive dependency.
+   * We save the path from the offending dependency to an immediate dependency containing it.
+   *
+   * @param fromCauseToRoot
+   * @param rangeMessage
+   */
   final case class TransitiveWarning(fromCauseToRoot: Seq[ModuleId], rangeMessage: String)
 
   type PathToRoot = Seq[ModuleId]
