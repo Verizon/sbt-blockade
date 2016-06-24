@@ -41,7 +41,7 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
     }
     "displaying restriction warning" in {
       val message = "some range message"
-      val w = RestrictionWarning(
+      val w = TransitiveWarning(
         List(
           toModuleId(`shapeless-2.2.5`),
           toModuleId(`doobie-core-0.2.3`),
@@ -49,7 +49,7 @@ class RecursiveSieveSpec extends FreeSpec with MustMatchers {
         ),
         message
       )
-      showWarnings(w) mustBe
+      showTransitiveDepResults(w) mustBe
         s"""
            |org.foo:has-trans-dep-on-shapeless:1.2.3 has a restricted transitive dependency: com.chuusai:shapeless:2.2.5
            |  some range message

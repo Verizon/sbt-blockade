@@ -81,7 +81,7 @@ object SievePlugin {
                 writeCheckFile(cacheFile.value, enforcementInterval.value)
                 log.info(dependenciesOK(name.value))
               case list => {
-                log.warn(displayImmediateDepResults(name.value, list))
+                log.warn(showImmediateDepResults(name.value, list))
                 if (list.exists(_._1.raisesError == true))
                   sys.error("One or more of the specified immediate dependencies are restricted.")
                 else ()
@@ -91,7 +91,7 @@ object SievePlugin {
               case None =>
                 log.info(dependenciesOK(name = name.value, transitive = true))
               case Some(w) =>
-                log.warn(YELLOW + s"[${name.value}]" + showWarnings(w) + RESET)
+                log.warn(YELLOW + s"[${name.value}]" + showTransitiveDepResults(w) + RESET)
             }
         }
       } else {

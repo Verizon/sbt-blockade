@@ -136,7 +136,7 @@ object SieveOps {
   /**
    * Given sieves, analyse immediate deps and transitive deps.
    */
-  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[RestrictionWarning]) = {
+  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
     val sieve = Sieve.catSieves(ts)
     val g = transpose(stripUnderscores(rawgraph))
     val fos = filterAndOutcomeFns(sieve)
@@ -153,12 +153,12 @@ object SieveOps {
     m <- ms.filter(mf).map(of)
   } yield m
 
-  def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[RestrictionWarning] = {
+  def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[TransitiveWarning] = {
     val sortedIds = topoSort(g)
     findRestrictedTransitiveDep(sortedIds, restrictions).map {
       case (badModuleId, message) =>
         val pathFromBadDepToRoot = getPathToRoot(sortedIds.dropWhile(_ != badModuleId), badModuleId, g.edges)
-        RestrictionWarning(pathFromBadDepToRoot, message)
+        TransitiveWarning(pathFromBadDepToRoot, message)
     }
   }
 
@@ -236,7 +236,7 @@ object SieveOps {
     g.copy(edges = g.edges.map { case (from, to) => (to, from) })
   }
 
-  final case class RestrictionWarning(fromCauseToRoot: Seq[ModuleId], rangeMessage: String)
+  final case class TransitiveWarning(fromCauseToRoot: Seq[ModuleId], rangeMessage: String)
 
   type PathToRoot = Seq[ModuleId]
 
@@ -247,7 +247,7 @@ object SieveOps {
     )
   }
 
-  def displayImmediateDepResults(name: String, so: Seq[(Outcome, Message)]): String = {
+  def showImmediateDepResults(name: String, so: Seq[(Outcome, Message)]): String = {
     CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
       so.distinct.map {
         case (Outcome.Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
@@ -256,7 +256,7 @@ object SieveOps {
       }.mkString("\n\t", ",\n\t", "")
   }
 
-  def showWarnings(w: RestrictionWarning): String = {
+  def showTransitiveDepResults(w: TransitiveWarning): String = {
     val path = w.fromCauseToRoot.reverse
     def go(indent: Int, remaining: Seq[ModuleId], acc: String): String = remaining match {
       case Nil =>
