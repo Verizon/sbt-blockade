@@ -23,6 +23,13 @@ import sbinary.{Format, DefaultProtocol}
 import depgraph._
 import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
 
+/**
+ * Represents a collection of whitelist and blacklist constraints.
+ *
+ * @param blacklist
+ * @param whitelist
+ */
+
 case class Sieve(blacklist: List[JBlacklistedModuleFilter],
                  whitelist: List[JModuleWhitelistRangeFilter]) {
   def +++(that: Sieve): Sieve =
@@ -120,6 +127,12 @@ object SieveOps {
     s"Module not within the inclusion range '$r'."
 
 
+  /**
+   * Attempts to parse a `Sieve` from a String.
+   *
+   * @param json
+   * @return
+   */
   def parseSieve(json: String): Try[Sieve] =
     for {
       a <- Try(parse(json))
@@ -129,12 +142,18 @@ object SieveOps {
   /**
    * Currently has an *intersection* semantics for whitelist.
    * We likely want to change this to have *union* semantics.
+   *
+   * @param whites
    */
   def coalesceWhites(whites: Seq[JModuleWhitelistRangeFilter]): Seq[JModuleWhitelistRangeFilter] =
     whites
 
   /**
    * Given sieves, analyse immediate deps and transitive deps.
+   *
+   * @param ms
+   * @param rawgraph
+   * @param ts
    */
   def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
     val sieve = Sieve.catSieves(ts)
@@ -146,7 +165,11 @@ object SieveOps {
   }
 
   /**
-   *  Given constraints, analyse immediate deps.
+   * Given constraints, analyse immediate deps.
+   *
+   * @param constraints
+   * @param ms
+   * @tparam A
    */
   def analyseImmediateDeps[A](ms: Seq[ModuleID], constraints: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(Outcome, Message)] = for {
     (mf,of) <- constraints
@@ -163,7 +186,44 @@ object SieveOps {
   }
 
   /**
+   * Make the arrows go in the opposite direction.
+   *
+   * @param g
+   * @return
+   */
+  def transpose(g: ModuleGraph): ModuleGraph =
+    g.copy(edges = g.edges.map { case (from, to) => (to, from) })
+
+  /**
+   * Topological sort a ModuleGraph.
+   *
+   * @param g
+   * @return
+   */
+  def topoSort(g: ModuleGraph): Seq[ModuleId] = {
+    def removeNodes(g: ModuleGraph, nodesForRemovalIds: Seq[ModuleId]): ModuleGraph = {
+      val updatedNodes = g.nodes.filter(n => !nodesForRemovalIds.contains(n.id))
+      val updatedEdges = g.edges.filter(e => !nodesForRemovalIds.contains(e._1))
+
+      ModuleGraph(updatedNodes, updatedEdges)
+    }
+
+    def go(curGraph: ModuleGraph, acc: Seq[ModuleId]): Seq[ModuleId] = {
+      if (curGraph.isEmpty) acc
+      else {
+        val roots = curGraph.roots.map(_.id)
+        go(removeNodes(curGraph, roots), acc ++ roots)
+      }
+    }
+
+    go(g, Seq.empty)
+  }
+
+  /**
    * Given constraints, find a transitive dependency in the DAG that does not satisfy the constaints.
+   *
+   * @param sortedNodes
+   * @param restrictions
    */
   def findRestrictedTransitiveDep(sortedNodes: Seq[ModuleId],
                                   restrictions: Seq[(ModuleFilter, ModuleOutcome)]): Option[(ModuleId, SieveOps.Message)] = {
@@ -179,8 +239,10 @@ object SieveOps {
 
   /**
    * Create a ModuleFilter from a whitelist or blacklist item.
+   *
+   * @param filter
    */
-  def toModuleFilter(f: SieveModuleFilter): (ModuleFilter, ModuleOutcome) = f match {
+  def toModuleFilter(filter: SieveModuleFilter): (ModuleFilter, ModuleOutcome) = filter match {
     case f: JBlacklistedModuleFilter => (
       (m: ModuleID) =>
         m.organization == f.organization &&
@@ -223,18 +285,6 @@ object SieveOps {
     )
   }
 
-  def removeNodes(g: ModuleGraph, nodesForRemovalIds: Seq[ModuleId]): ModuleGraph = {
-
-    val updatedNodes = g.nodes.filter(n => !nodesForRemovalIds.contains(n.id))
-
-    val updatedEdges = g.edges.filter(e => !nodesForRemovalIds.contains(e._1))
-
-    ModuleGraph(updatedNodes, updatedEdges)
-  }
-
-  def transpose(g: ModuleGraph): ModuleGraph = {
-    g.copy(edges = g.edges.map { case (from, to) => (to, from) })
-  }
 
   final case class TransitiveWarning(fromCauseToRoot: Seq[ModuleId], rangeMessage: String)
 
@@ -247,6 +297,13 @@ object SieveOps {
     )
   }
 
+  /**
+   * Turns immediate dependency results into presentable form.
+   *
+   * @param name
+   * @param so
+   * @return
+   */
   def showImmediateDepResults(name: String, so: Seq[(Outcome, Message)]): String = {
     CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
       so.distinct.map {
@@ -256,6 +313,12 @@ object SieveOps {
       }.mkString("\n\t", ",\n\t", "")
   }
 
+  /**
+   * Turns transitive dependency results into presentable form.
+   *
+   * @param w
+   * @return
+   */
   def showTransitiveDepResults(w: TransitiveWarning): String = {
     val path = w.fromCauseToRoot.reverse
     def go(indent: Int, remaining: Seq[ModuleId], acc: String): String = remaining match {
@@ -274,15 +337,4 @@ object SieveOps {
     preamble + go(2, path, "")
   }
 
-  def topoSort(g: ModuleGraph): Seq[ModuleId] = {
-    def go(curGraph: ModuleGraph, acc: Seq[ModuleId]): Seq[ModuleId] = {
-      if (curGraph.isEmpty) acc
-      else {
-        val roots = curGraph.roots.map(_.id)
-        go(removeNodes(curGraph, roots), acc ++ roots)
-      }
-    }
-
-    go(g, Seq.empty)
-  }
 }

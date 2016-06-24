@@ -65,6 +65,7 @@ object SievePlugin {
     sieve := {
       val log = streams.value.log
 
+      // If the project has not been sieved recently, we attempt to sieve and display results.
       if (!(skip in sieve).value) {
         val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieves.value.map(url => sieveio.loadFromURL(url).flatMap(SieveOps.parseSieve)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
@@ -75,6 +76,7 @@ object SievePlugin {
           case Failure(e) =>
             log.error(s"Unable to execute the specified sieves because an error occurred: $e")
 
+          // If we succeed in parsing the Sieves, we evaluate the dependency graph and display the results.
           case Success((immediateOutcomes, maybeWarning)) =>
             immediateOutcomes.toList match {
               case Nil =>
@@ -95,7 +97,8 @@ object SievePlugin {
             }
         }
       } else {
-        () // do nothing here as the project has already been sieved recently.
+        // Do nothing since the project has been sieved recently.
+        ()
       }
     }
   )
