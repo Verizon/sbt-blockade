@@ -12,7 +12,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
   import Fixtures._
   import SieveOps._
 
-  val df = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss")
+  def df = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss")
 
   def time(l: Long): String = df.format(new Date(l))
 
@@ -22,7 +22,7 @@ class SieveSpec extends FreeSpec with MustMatchers {
 
   object check {
     def apply(defined: Seq[ModuleID], expected: Seq[Outcome])(json: String) = {
-      process(defined.toList)(json) must equal(expected.toList)
+      process(defined)(json) must equal(expected.toList)
     }
 
     def process(defined: Seq[ModuleID])(json: String): Seq[Outcome] = {
