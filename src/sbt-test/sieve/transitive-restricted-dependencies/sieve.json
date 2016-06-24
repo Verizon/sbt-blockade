@@ -1,0 +1,17 @@
+{
+  "blacklist": [
+    {
+      "organization": "com.chuusai",
+      "name": "shapeless",
+      "range": "[1.0,4.0]",
+      "expiry": "2012-06-12 15:36:31"
+    }
+  ],
+  "whitelist": [
+    {
+      "organization": "com.chuusai",
+      "name": "shapeless",
+      "range": "[1.0,2.0]"
+    }
+  ]
+}
