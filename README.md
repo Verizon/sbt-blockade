@@ -5,13 +5,23 @@
 
 ## Overview
 
-`sbt-dependency-sieve` gives you the ability to restrict which dependencies are tolerated in your builds.
+`sbt-dependency-sieve` gives you the ability to restrict which dependencies are tolerated in your builds using plain ol' JSON. Here's an example to whet your your appetite:
 
-Specify your restricted and allowed dependecies using plain ol' JSON.
+```json
+{
+  "organization": "commons-codec",
+  "name": "commons-codec",
+  "range": "[1.0,1.6]",
+  "expiry": "2017-02-01 11:59:59"
+}
+```
 
-`sbt-dependency-sieve` allows you to specify whitelisted packages, or blacklisted packages -- or both! See [Specifying dependency restrictions](### Specifying dependency restrictions).
+You can specify whitelisted packages, or blacklisted packages -- or both (see the section *Specifying dependency restrictions* for more info). 
+
+You can restrict packages by version range, and for blacklisted items, you can define a "probationary"/"warning" period that expires after a particular expiry date.
 
 
+Read on to get started.
 ## Getting Started
 
 Both a whitelist and blacklist may be used. Ivy version ranges are specified in accordance with [the Ivy version matcher docs](http://ant.apache.org/ivy/history/2.1.0/settings/version-matchers.html).
@@ -60,7 +70,7 @@ Dependency restrictions are specified using a JSON object containing a (possibly
 
 Note that a package can be a member of both a whitelist and a blacklist. And a package can be entered more than once (with differing restrictions) on a blacklist. Similarly, a whitelist may have more than one entry for a particular package.
 
-Blacklists have *OR* semantics. In other words, the *union* of blacklist constaints is enforced -- a package meeting *any* blacklist constraint is restricted.
+Blacklists have *OR* semantics. In other words, the *union* of blacklist constraints is enforced -- a package meeting *any* blacklist constraint is restricted.
 
 Whitelists have *AND* semantics. A package must meet the *all* whitelist constraints to not be restricted.
 
