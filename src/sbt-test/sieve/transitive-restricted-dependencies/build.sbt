@@ -1,6 +1,5 @@
 
 import verizon.build._
-import verizon.build.SieveKeys._
 
 scalaVersion := "2.10.4"
 

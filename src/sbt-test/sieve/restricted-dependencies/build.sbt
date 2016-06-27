@@ -1,6 +1,5 @@
 
 import verizon.build._
-import verizon.build.SieveKeys._
 
 resolvers += "internal" at "http://nexus.oncue.verizon.net/nexus/content/groups/internal/"
 
