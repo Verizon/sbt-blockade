@@ -5,19 +5,19 @@ import sbt.Keys._
 import scala.concurrent.duration._
 import depgraph._
 
-object SieveKeys {
-
-  import java.net.URI
-
-  val enforcementInterval = SettingKey[Duration]("sieve-enforcement-interval")
-  val cacheFile = SettingKey[File]("sieve-cache-file")
-  val sieveUris = SettingKey[Seq[URI]]("sieve-uris")
-  val sieve = TaskKey[Unit]("sieve")
-  val dependencyGraphCrossProjectId = SettingKey[ModuleID]("dependency-graph-cross-project-id")
-}
-
 object SievePlugin extends AutoPlugin { self =>
-  import SieveKeys._
+
+  object autoImport {
+    import java.net.URI
+
+    val sieveEnforcementInterval = settingKey[Duration]("sieve-enforcement-interval")
+    val sieveCacheFile = settingKey[File]("sieve-cache-file")
+    val sieveUris = settingKey[Seq[URI]]("sieve-uris")
+    val sieve = taskKey[Unit]("sieve")
+    val sieveDependencyGraphCrossProjectId = settingKey[ModuleID]("sieve-dependency-graph-cross-project-id")
+  }
+
+  import autoImport._
 
   /** sbt auto-plugin stuffs **/
   override def trigger = allRequirements
@@ -56,17 +56,17 @@ object SievePlugin extends AutoPlugin { self =>
   }
 
   val moduleGraphSbtTask =
-    (sbt.Keys.update, dependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
+    (sbt.Keys.update, sieveDependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
       SbtUpdateReport.fromConfigurationReport(update.configuration(config.name).get, root)
     }
 
   def settings: Seq[Def.Setting[_]] = Seq(
-    dependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
-    cacheFile := target.value / "sieved",
-    enforcementInterval := 30.minutes,
+    sieveDependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
+    sieveCacheFile := target.value / "sieved",
+    sieveEnforcementInterval := 30.minutes,
     sieveUris := Seq.empty,
     skip in sieve := {
-      val f = cacheFile.value
+      val f = sieveCacheFile.value
       if (f.exists) readCheckFile(f) else false
     },
     sieve := {
@@ -87,7 +87,7 @@ object SievePlugin extends AutoPlugin { self =>
           case Success((immediateOutcomes, maybeWarning)) =>
             immediateOutcomes.toList match {
               case Nil =>
-                writeCheckFile(cacheFile.value, enforcementInterval.value)
+                writeCheckFile(sieveCacheFile.value, sieveEnforcementInterval.value)
                 log.info(dependenciesOK(name.value))
               case list => {
                 log.warn(showImmediateDepResults(name.value, list))

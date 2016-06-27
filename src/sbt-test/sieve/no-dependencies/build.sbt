@@ -1,6 +1,5 @@
 
 import verizon.build._
-import verizon.build.SieveKeys._
 import scala.concurrent.duration._
 
 scalaVersion := "2.10.4"
@@ -12,4 +11,4 @@ libraryDependencies ++= Seq(
 
 sieveUris := Seq(new java.net.URI(s"file:///${baseDirectory.value}/sieve.json"))
 
-enforcementInterval := 3.seconds
+sieveEnforcementInterval := 3.seconds
