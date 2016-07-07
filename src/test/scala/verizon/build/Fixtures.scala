@@ -5,7 +5,8 @@ import java.net.URL
 import depgraph._
 import SieveOps._
 
-object Fixtures extends DependencyBuilders {
+object Fixtures extends Fixtures
+trait Fixtures extends DependencyBuilders {
   def load(p: String): URL =
     getClass.getClassLoader.getResource(p)
 
@@ -33,7 +34,10 @@ object Fixtures extends DependencyBuilders {
   val m0HasShapelessTransDep = Module(toModuleId(`toplevel-has-trans-dep-on-shapeless`))
   val m1 = Module(toModuleId(`doobie-core-0.2.3`))
   val m2 = Module(toModuleId(`scalaz-core-7.1.4`))
-  val m3 = Module(toModuleId(`scalaz-effect-7.1.4`))
+  val m3 = Module(
+    id = toModuleId(`scalaz-effect-7.1.4`),
+    evictedByVersion = Some("notrelevant")
+  )
   val m4 = Module(toModuleId(`scalaz-stream-0.8`))
   val m5 = Module(toModuleId(`shapeless-2.2.5`))
   val graphWithNestedShapeless = ModuleGraph(
@@ -42,6 +46,16 @@ object Fixtures extends DependencyBuilders {
       m0HasShapelessTransDep.id -> m1.id,
       m1.id -> m2.id,
       m1.id -> m3.id,
+      m1.id -> m4.id,
+      m1.id -> m5.id,
+      m0HasScalazDep.id -> m2.id
+    )
+  )
+  val graphWithNestedShapelessWithoutEvicted = ModuleGraph(
+    nodes = Seq(m5, m4, m0HasShapelessTransDep, m1, m2, m0HasScalazDep),
+    edges = Seq(
+      m0HasShapelessTransDep.id -> m1.id,
+      m1.id -> m2.id,
       m1.id -> m4.id,
       m1.id -> m5.id,
       m0HasScalazDep.id -> m2.id
