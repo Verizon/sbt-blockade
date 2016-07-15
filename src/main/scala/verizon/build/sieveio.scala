@@ -9,7 +9,7 @@ import java.net.URI
 import scala.io.Source
 import net.liftweb.json._
 
-object blockadeio {
+object sieveio {
   type JsonAsString = String
 
   def loadFromURLString(url: String): Try[JsonAsString] =

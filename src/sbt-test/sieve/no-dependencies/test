@@ -1,0 +1,21 @@
+# sieve the dependencies and get sieved
+> sieve
+
+# check the cache file was written
+$ exists target/sieved
+
+# sieve again (expecting it to be skipped)
+> sieve
+
+# remove and try siving again (expect to be sieved)
+$ delete target/sieved
+
+# sieve again, the cache file will be rewritten and sieved
+> sieve
+
+# pause for longer than the `enforcementInterval` and expect to be sieved
+$ sleep 5
+> sieve
+
+# sieve again (expecting it to be skipped)
+> sieve

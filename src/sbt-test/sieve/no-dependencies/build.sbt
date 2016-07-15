@@ -9,6 +9,6 @@ libraryDependencies ++= Seq(
   "commons-lang" % "commons-lang" % "2.6"
 )
 
-blockadeUris := Seq(new java.net.URI(s"file:///${baseDirectory.value}/blockade.json"))
+sieveUris := Seq(new java.net.URI(s"file:///${baseDirectory.value}/sieve.json"))
 
-blockadeEnforcementInterval := 3.seconds
+sieveEnforcementInterval := 3.seconds
