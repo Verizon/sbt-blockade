@@ -3,7 +3,7 @@ package verizon.build
 import sbt.impl.DependencyBuilders
 import java.net.URL
 import depgraph._
-import SieveOps._
+import BlockadeOps._
 
 object Fixtures extends Fixtures
 trait Fixtures extends DependencyBuilders {

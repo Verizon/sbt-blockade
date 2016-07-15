@@ -7,10 +7,10 @@ import sbt.ModuleID
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class SieveSpec extends FreeSpec with MustMatchers {
+class BlockadeSpec extends FreeSpec with MustMatchers {
 
   import Fixtures._
-  import SieveOps._
+  import BlockadeOps._
 
   def df = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss")
 
@@ -26,11 +26,11 @@ class SieveSpec extends FreeSpec with MustMatchers {
     }
 
     def process(defined: Seq[ModuleID])(json: String): Seq[Outcome] = {
-      val sieve: Sieve = SieveOps.parseSieve(json) match {
+      val blockade: Blockade = BlockadeOps.parseBlockade(json) match {
         case Failure(_) => fail("Problem parsing test json.")
         case Success(x) => x
       }
-      val fos = SieveOps.filterAndOutcomeFns(sieve)
+      val fos = BlockadeOps.filterAndOutcomeFns(blockade)
       analyseImmediateDeps(defined, fos).map(_._1)
     }
   }
@@ -380,9 +380,9 @@ class SieveSpec extends FreeSpec with MustMatchers {
   }
 
 
-  "sieve definition failure modes" - {
-    "fail with a meaningful message when the sieve is invalid" in {
-      SieveOps.parseSieve(
+  "blockade definition failure modes" - {
+    "fail with a meaningful message when the blockade is invalid" in {
+      BlockadeOps.parseBlockade(
         s"""
            |this will never parse
       """.stripMargin
