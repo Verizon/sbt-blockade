@@ -1,11 +1,11 @@
-# sbt-dependency-sieve
+# sbt-blockade
 > Defend your builds from bad deps!
 
-[![Build Status](https://travis.oncue.verizon.net/iptv/sbt-dependency-sieve.svg?token=Lp2ZVD96vfT8T599xRfV)](https://travis.oncue.verizon.net/iptv/sbt-dependency-sieve)
+[![Build Status](https://travis.oncue.verizon.net/iptv/sbt-blockade.svg?token=Lp2ZVD96vfT8T599xRfV)](https://travis.oncue.verizon.net/iptv/sbt-dependency-blockade)
 
 ## Overview
 
-`sbt-dependency-sieve` gives you the ability to restrict which dependencies are tolerated in your builds using plain ol' JSON. Here's an example to whet your your appetite:
+`sbt-blockade` gives you the ability to restrict which dependencies are tolerated in your builds using plain ol' JSON. Here's an example to whet your your appetite:
 
 ```json
 {

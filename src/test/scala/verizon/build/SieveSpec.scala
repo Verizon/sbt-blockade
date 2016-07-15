@@ -26,11 +26,11 @@ class SieveSpec extends FreeSpec with MustMatchers {
     }
 
     def process(defined: Seq[ModuleID])(json: String): Seq[Outcome] = {
-      val sieve: Sieve = SieveOps.parseSieve(json) match {
+      val blockade: Blockade = SieveOps.parseSieve(json) match {
         case Failure(_) => fail("Problem parsing test json.")
         case Success(x) => x
       }
-      val fos = SieveOps.filterAndOutcomeFns(sieve)
+      val fos = SieveOps.filterAndOutcomeFns(blockade)
       analyseImmediateDeps(defined, fos).map(_._1)
     }
   }
@@ -380,8 +380,8 @@ class SieveSpec extends FreeSpec with MustMatchers {
   }
 
 
-  "sieve definition failure modes" - {
-    "fail with a meaningful message when the sieve is invalid" in {
+  "blockade definition failure modes" - {
+    "fail with a meaningful message when the blockade is invalid" in {
       SieveOps.parseSieve(
         s"""
            |this will never parse

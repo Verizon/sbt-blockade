@@ -10,11 +10,11 @@ object SievePlugin extends AutoPlugin { self =>
   object autoImport {
     import java.net.URI
 
-    val sieveEnforcementInterval = settingKey[Duration]("sieve-enforcement-interval")
-    val sieveCacheFile = settingKey[File]("sieve-cache-file")
-    val sieveUris = settingKey[Seq[URI]]("sieve-uris")
-    val sieve = taskKey[Unit]("sieve")
-    val sieveDependencyGraphCrossProjectId = settingKey[ModuleID]("sieve-dependency-graph-cross-project-id")
+    val blockadeEnforcementInterval = settingKey[Duration]("blockade-enforcement-interval")
+    val blockadeCacheFile = settingKey[File]("blockade-cache-file")
+    val blockadeUris = settingKey[Seq[URI]]("blockade-uris")
+    val blockade = taskKey[Unit]("blockade")
+    val blockadeDependencyGraphCrossProjectId = settingKey[ModuleID]("blockade-dependency-graph-cross-project-id")
   }
 
   import autoImport._
@@ -23,7 +23,7 @@ object SievePlugin extends AutoPlugin { self =>
   override def trigger = allRequirements
   override lazy val projectSettings = self.settings
   override lazy val globalSettings: Seq[Setting[_]] = Seq(
-    sieveUris := Nil
+    blockadeUris := Nil
   )
 
   /** actual plugin content **/
@@ -56,38 +56,38 @@ object SievePlugin extends AutoPlugin { self =>
   }
 
   val moduleGraphSbtTask =
-    (sbt.Keys.update, sieveDependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
+    (sbt.Keys.update, blockadeDependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
       SbtUpdateReport.fromConfigurationReport(update.configuration(config.name).get, root)
     }
 
   def settings: Seq[Def.Setting[_]] = Seq(
-    sieveDependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
-    sieveCacheFile := target.value / "sieved",
-    sieveEnforcementInterval := 30.minutes,
-    sieveUris := Seq.empty,
-    skip in sieve := {
-      val f = sieveCacheFile.value
+    blockadeDependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
+    blockadeCacheFile := target.value / "blockaded",
+    blockadeEnforcementInterval := 30.minutes,
+    blockadeUris := Seq.empty,
+    skip in blockade := {
+      val f = blockadeCacheFile.value
       if (f.exists) readCheckFile(f) else false
     },
-    sieve := {
+    blockade := {
       val log = streams.value.log
 
-      // If the project has not been sieved recently, we attempt to sieve and display results.
-      if (!(skip in sieve).value) {
-        val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieveUris.value.map(url => sieveio.loadFromURI(url).flatMap(SieveOps.parseSieve)))
+      // If the project has not been blockaded recently, we attempt to blockade and display results.
+      if (!(skip in blockade).value) {
+        val parsedSieveItems: Try[Seq[Blockade]] = flattenTrys(blockadeUris.value.map(url => blockadeio.loadFromURI(url).flatMap(SieveOps.parseSieve)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
         val graph: ModuleGraph = moduleGraphSbtTask.value
-        parsedSieveItems.map((sieves: Seq[Sieve]) => SieveOps.analyseDeps(deps, sieves, graph)) match {
+        parsedSieveItems.map((blockades: Seq[Blockade]) => SieveOps.analyseDeps(deps, blockades, graph)) match {
           case Failure(_: java.net.UnknownHostException) => ()
 
           case Failure(e) =>
-            log.error(s"Unable to execute the specified sieves because an error occurred: $e")
+            log.error(s"Unable to execute the specified blockades because an error occurred: $e")
 
           // If we succeed in parsing the Sieves, we evaluate the dependency graph and display the results.
           case Success((immediateOutcomes, maybeWarning)) =>
             immediateOutcomes.toList match {
               case Nil =>
-                writeCheckFile(sieveCacheFile.value, sieveEnforcementInterval.value)
+                writeCheckFile(blockadeCacheFile.value, blockadeEnforcementInterval.value)
                 log.info(dependenciesOK(name.value))
               case list => {
                 log.warn(showImmediateDepResults(name.value, list))
@@ -104,7 +104,7 @@ object SievePlugin extends AutoPlugin { self =>
             }
         }
       } else {
-        // Do nothing since the project has been sieved recently.
+        // Do nothing since the project has been blockaded recently.
         ()
       }
     }

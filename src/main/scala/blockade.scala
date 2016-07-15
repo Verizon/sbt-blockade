@@ -26,17 +26,17 @@ import net.liftweb.json._
  * @param whitelist
  */
 
-case class Sieve(blacklist: List[JBlacklistedModuleFilter],
+case class Blockade(blacklist: List[JBlacklistedModuleFilter],
                  whitelist: List[JModuleWhitelistRangeFilter]) {
-  def +++(that: Sieve): Sieve =
-    Sieve((blacklist ++ that.blacklist).distinct, (whitelist ++ that.whitelist).distinct)
+  def +++(that: Blockade): Blockade =
+    Blockade((blacklist ++ that.blacklist).distinct, (whitelist ++ that.whitelist).distinct)
 
 }
 
-object Sieve {
-  def empty: Sieve = Sieve(Nil, Nil)
+object Blockade {
+  def empty: Blockade = Blockade(Nil, Nil)
 
-  def catSieves(ss: Seq[Sieve]): Sieve = ss.foldLeft(Sieve.empty)(_ +++ _)
+  def catSieves(ss: Seq[Blockade]): Blockade = ss.foldLeft(Blockade.empty)(_ +++ _)
 
 }
 
@@ -136,7 +136,7 @@ object SieveOps {
   private implicit val formats: Formats = DefaultFormats
   private val matcher = new VersionRangeMatcher("range", new LatestRevisionStrategy)
 
-  def filterAndOutcomeFns(s: Sieve): Seq[(ModuleFilter, ModuleOutcome)] =
+  def filterAndOutcomeFns(s: Blockade): Seq[(ModuleFilter, ModuleOutcome)] =
     s.blacklist.map(toModuleFilter) ++ s.whitelist.map(toModuleFilter)
 
   private def messageWithRange(r: String, e: String): String =
@@ -147,15 +147,15 @@ object SieveOps {
 
 
   /**
-   * Attempts to parse a `Sieve` from a String.
+   * Attempts to parse a `Blockade` from a String.
    *
    * @param json
    * @return
    */
-  def parseSieve(json: String): Try[Sieve] =
+  def parseSieve(json: String): Try[Blockade] =
     for {
       a <- Try(parse(json))
-      b <- Try(a.extract[Sieve])
+      b <- Try(a.extract[Blockade])
     } yield b
 
   /**
@@ -168,16 +168,16 @@ object SieveOps {
     whites
 
   /**
-   * Given sieves, analyse immediate deps and transitive deps.
+   * Given blockades, analyse immediate deps and transitive deps.
    *
    * @param ms
    * @param rawgraph
    * @param ts
    */
-  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Sieve], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
+  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Blockade], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
     val fos = {
-      val sieve = Sieve.catSieves(ts)
-      filterAndOutcomeFns(sieve)
+      val blockade = Blockade.catSieves(ts)
+      filterAndOutcomeFns(blockade)
     }
 
     val omsAndFilters =
@@ -320,11 +320,11 @@ object SieveOps {
    * @return
    */
   def showImmediateDepResults(name: String, so: Seq[(Outcome, Message)]): String = {
-    CYAN + s"[$name] The following dependencies were caught in the sieve: " + RESET +
+    CYAN + s"[$name] The following dependencies were caught in the blockade: " + RESET +
       so.distinct.map {
         case (Outcome.Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
         case (Outcome.Deprecated(m), msg) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
-        case (o, m) => "Unkonwn input to sieve display."
+        case (o, m) => "Unkonwn input to blockade display."
       }.mkString("\n\t", ",\n\t", "")
   }
 
