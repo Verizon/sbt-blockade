@@ -12,4 +12,4 @@ libraryDependencies ++= Seq(
   "oncue.journal" %% "core" % "2.2.1"
 )
 
-sieveUris := Seq(new java.net.URI(s"file:///${baseDirectory.value}/sieve.json"))
+blockadeUris := Seq(new java.net.URI(s"file:///${baseDirectory.value}/blockade.json"))

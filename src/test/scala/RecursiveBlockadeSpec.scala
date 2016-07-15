@@ -2,11 +2,11 @@ package verizon.build
 
 import org.scalatest._
 import Fixtures._
-import SieveOps._
+import BlockadeOps._
 import depgraph._
 import sbt._
 
-class RecursiveSieveSpec extends FreeSpec with MustMatchers {
+class RecursiveBlockadeSpec extends FreeSpec with MustMatchers {
 
   "given a dependency graph can topo sort the graph" in {
     GraphOps.topoSort(graphWithNestedShapeless).toList mustBe List(

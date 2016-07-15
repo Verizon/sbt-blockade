@@ -2,7 +2,7 @@ import verizon.build._
 
 common.settings
 
-name := "sbt-dependency-sieve"
+name := "sbt-blockade"
 
 teamName := Some("inf")
 
