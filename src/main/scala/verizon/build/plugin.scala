@@ -76,7 +76,7 @@ object SievePlugin extends AutoPlugin { self =>
       if (!(skip in sieve).value) {
         val parsedSieveItems: Try[Seq[Sieve]] = flattenTrys(sieveUris.value.map(url => sieveio.loadFromURI(url).flatMap(SieveOps.parseSieve)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
-        val graph: ModuleGraph = moduleGraphSbtTask.value
+        val graph: ModuleGraph = GraphOps.pruneEvicted(moduleGraphSbtTask.value)
         parsedSieveItems.map((sieves: Seq[Sieve]) => SieveOps.analyseDeps(deps, sieves, graph)) match {
           case Failure(_: java.net.UnknownHostException) => ()
 

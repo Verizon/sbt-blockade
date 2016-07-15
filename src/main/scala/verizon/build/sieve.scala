@@ -389,6 +389,28 @@ object GraphOps {
     go(g, Seq.empty)
   }
 
+  /**
+   * Ivy (and sbt-dependency-graph) gives us a DAG containing
+   * evicted modules, but not the evicted modules' dependencies
+   * (unless those sub-dependencies are used by a non-evicted module,
+   * in which case we want to keep them anyway).
+   * So, we need only remove evicted nodes and their in-bound (and out-bound,
+   * if they happen to exist) edges.
+   */
+  def pruneEvicted(g: ModuleGraph): ModuleGraph = {
+    val usedModules = g.nodes.filterNot(_.isEvicted)
+    val usedModuleIds = usedModules.map(_.id).toSet
+    val legitEdges = g.edges.filter {
+      case (from, to) =>
+        usedModuleIds.contains(from) && usedModuleIds.contains(to)
+    }
+
+    g.copy(
+      nodes = usedModules,
+      edges = legitEdges
+    )
+
+  }
 
 }
 
