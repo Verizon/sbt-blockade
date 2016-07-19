@@ -285,7 +285,10 @@ object BlockadeOps {
   }
 
   def stripUnderscores(g: ModuleGraph): ModuleGraph = {
-    def stripUnderscore(mid: ModuleId): ModuleId = mid.copy(name = mid.name.takeWhile(_ != '_'))
+    def stripUnderscore(mid: ModuleId): ModuleId = {
+      val updatedName = mid.name.split("_2\\.").head // yolo
+      mid.copy(name = updatedName)
+    }
     g.copy(
       nodes = g.nodes.map(n => n.copy(id = stripUnderscore(n.id))),
       edges = g.edges.map {
