@@ -277,6 +277,45 @@ class BlockadeSpec extends FreeSpec with MustMatchers {
         }
       }
 
+      "when blacklist item's range is null, all versions of the item are restricted" in {
+        check(
+          defined = Seq(`commons-io-2.2`, `commons-codec-2.9`, `commons-codec-1.9`),
+          expected = Seq(Outcome.Restricted(`commons-codec-2.9`), Outcome.Restricted(`commons-codec-1.9`))) {
+          s"""
+             |{
+             |  "whitelist": [],
+             |  "blacklist": [
+             |    {
+             |      "organization": "commons-codec",
+             |      "name": "commons-codec",
+             |      "range": null,
+             |      "expiry": "${yesterday}"
+             |    }
+             |  ]
+             |}
+      """.stripMargin
+        }
+      }
+
+      "when blacklist item's range is missing, all versions of the item are restricted" in {
+        check(
+          defined = Seq(`commons-io-2.2`, `commons-codec-2.9`, `commons-codec-1.9`),
+          expected = Seq(Outcome.Restricted(`commons-codec-2.9`), Outcome.Restricted(`commons-codec-1.9`))) {
+          s"""
+             |{
+             |  "whitelist": [],
+             |  "blacklist": [
+             |    {
+             |      "organization": "commons-codec",
+             |      "name": "commons-codec",
+             |      "expiry": "${yesterday}"
+             |    }
+             |  ]
+             |}
+      """.stripMargin
+        }
+      }
+
       "available 4, deprecate 1, restrict 1, ignore 2" in {
         check(
           defined = Seq(
