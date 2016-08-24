@@ -60,7 +60,7 @@ sealed trait BlockadeModuleFilter
  */
 final case class JBlacklistedModuleFilter(organization: String,
                                           name: String,
-                                          range: String,
+                                          range: Option[String],
                                           expiry: String) extends BlockadeModuleFilter {
 
 
@@ -107,6 +107,8 @@ object Outcome {
     override val underlying: Option[ModuleID] = Option(module)
     override def raisesError: Boolean = true
   }
+
+  final val restricted: ModuleID => Outcome = Restricted(_)
 
   /**
    * Deprecated immediate dependency result.
@@ -255,11 +257,14 @@ object BlockadeOps {
     case f: JBlacklistedModuleFilter => (
       (m: ModuleID) =>
         m.organization == f.organization &&
-          m.name == f.name &&
+          m.name == f.name && f.range.fold(true) { range =>
           matcher.accept(
-            ModuleRevisionId.newInstance(f.organization, f.name, f.range),
-            ModuleRevisionId.newInstance(m.organization, m.name, m.revision)),
-      (m: ModuleID) => (if (f.isExpired) Outcome.Restricted(m) else Outcome.Deprecated(m), messageWithRange(f.range, f.expiry))
+            ModuleRevisionId.newInstance(f.organization, f.name, range),
+            ModuleRevisionId.newInstance(m.organization, m.name, m.revision))
+        },
+      (m: ModuleID) => f.range.fold((Outcome.restricted(m), "All versions of module excluded.")) { range =>
+        (if (f.isExpired) Outcome.Restricted(m) else Outcome.Deprecated(m), messageWithRange(range, f.expiry))
+      }
       )
     case f: JModuleWhitelistRangeFilter => (
       (m: ModuleID) =>

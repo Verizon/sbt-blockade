@@ -14,6 +14,7 @@ trait Fixtures extends DependencyBuilders {
     s"commons-$s" % s"commons-$s" % v
 
   val `commons-codec-1.9` = commons("codec", "1.9")
+  val `commons-codec-2.9` = commons("codec", "2.9")
   val `commons-codec-1.+` = commons("codec", "1.+")
   val `commons-io-2.2` = commons("io", "2.2")
   val `commons-lang-2.2` = commons("lang", "2.2")
