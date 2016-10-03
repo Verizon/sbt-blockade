@@ -1,8 +1,6 @@
 
-resolvers += "internal.nexus" at "http://nexus.oncue.verizon.net/nexus/content/groups/internal"
-
 libraryDependencies <+= (sbtVersion) { sv =>
   "org.scala-sbt" % "scripted-plugin" % sv
 }
 
-addSbtPlugin("verizon.inf.build" % "sbt-verizon" % "1.0.+")
+addSbtPlugin("io.verizon.build" % "sbt-rig" % "1.1.20")

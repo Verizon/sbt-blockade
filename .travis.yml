@@ -1,4 +1,5 @@
 language: scala
+
 scala:
   - 2.10.5
 
@@ -13,7 +14,16 @@ before_script:
   - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git checkout -qf $TRAVIS_BRANCH; fi"
 
 script:
-  - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then sbt 'release with-defaults'; else sbt validate; fi"
+  - |
+    if [ $TRAVIS_PULL_REQUEST = 'false' ]; then
+      if [ $RELEASE_ON_PUSH = 'false' ]; then
+        sbt ++$TRAVIS_SCALA_VERSION validate
+      else
+        sbt ++$TRAVIS_SCALA_VERSION 'release with-defaults'
+      fi
+    else
+      sbt ++$TRAVIS_SCALA_VERSION validate
+    fi
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 
@@ -22,11 +32,7 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
 
-notifications:
-  email:
-    recipients:
-      - timothy.m.perrett@one.verizon.com
-      - andrew.mohrland@one.verizon.com
-      - cody.allen@one.verizon.com
-    on_success: change
-    on_failure: always
+env:
+  global:
+    - secure: "OCcDaEw7rtg0r4jEgm1VYdy+k4IrfgoNa8fsysdo/O70is7upf3r7M3XzndCF22ABbV1yn04/fSOJ5/deaGMPb1M6TWBQn9B4m1HMgD7kSgEQjuVKyNDRlSt4HpUcDqi+gzcnbeifv4hVeRkllWq5cZwF/s/WtpC7uvocV6hMK4="
+    - secure: "GilPBhmxnD3S3KrhT/rq/pyPSPPYdTR3dXIzhmkyK7xNXaRh/dLho4C5N9ZHaweiJHgee+xti6LlgoHGxKcjRrXjRxYgwVvyCxm8WwHWwgUzNY2Yc45OSmZG0txuvKtXcYlSAzILOc1MAzwzqdSH6PIUgO1mXGwt5NTD4m40KDo="
