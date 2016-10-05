@@ -2,7 +2,7 @@
 > Defend your builds from bad deps!
 
 [![Build Status](https://travis-ci.org/Verizon/sbt-blockade.svg?branch=master)](https://travis-ci.org/Verizon/sbt-blockade)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.verizon.build/sbt-blockade_2.10_0.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.verizon.build/sbt-blockade_2.10_0.13)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.verizon.build/sbt-blockade/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.verizon.build/sbt-blockade)
 
 ## Overview
 
