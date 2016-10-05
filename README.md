@@ -21,9 +21,13 @@ You can specify whitelisted packages, or blacklisted packages -- or both (see th
 
 You can restrict packages by version range, and for blacklisted items, you can define a "probationary"/"warning" period that expires after a particular expiry date.
 
-
-Read on to get started.
 ## Getting Started
+
+First, add the following dependency to your project:
+
+```
+addSbtPlugin("io.verizon.build" % "sbt-blockade" % "2.0.+")
+```
 
 Both a whitelist and blacklist may be used. Ivy version ranges are specified in accordance with [the Ivy version matcher docs](http://ant.apache.org/ivy/history/2.1.0/settings/version-matchers.html).
 
