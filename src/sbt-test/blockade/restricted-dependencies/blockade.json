@@ -13,13 +13,13 @@
       "expiry": "2016-06-12 15:36:31"
     },
     {
-      "organization": "oncue.knobs",
+      "organization": "io.verizon.knobs",
       "name": "core",
       "range": "(,3.3.0[",
       "expiry": "2013-06-13 12:00:00"
     },
     {
-      "organization": "oncue.journal",
+      "organization": "io.verizon.journal",
       "name": "core",
       "range": "(,2.0.5[",
       "expiry": "2015-04-22 12:00:00"
