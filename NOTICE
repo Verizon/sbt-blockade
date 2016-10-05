@@ -1,8 +1,10 @@
 
-sbt-blockade
-Copyright (c) 2016 Verizon.  All rights reserved.
-Licensed under Apache License 2.0. See LICENSE.txt for terms.
+==============================================================
+ sbt-blockade
+ Copyright (C) 2016  Verizon.
+==============================================================
 
-This product includes software developed at Verizon (http://www.verizon.com/).
+This product includes software developed by
+Verizon (www.verizon.com; github.com/verizon).
 
 Borrows the dependency graph code from sbt-dependency-graph (https://github.com/jrudolph/sbt-dependency-graph), Copyright 2015 Johannes Rudolph
