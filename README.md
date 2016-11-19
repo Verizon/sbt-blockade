@@ -1,4 +1,7 @@
 # sbt-blockade
+
+![image](docs/img/logo.png)
+
 > Defend your builds from bad deps!
 
 [![Build Status](https://travis-ci.org/Verizon/sbt-blockade.svg?branch=master)](https://travis-ci.org/Verizon/sbt-blockade)
