@@ -29,7 +29,7 @@ You can restrict packages by version range, and for blacklisted items, you can d
 First, add the following dependency to your project:
 
 ```
-addSbtPlugin("io.verizon.build" % "sbt-blockade" % "2.0.+")
+addSbtPlugin("io.verizon.build" % "sbt-blockade" % "0.2.+")
 ```
 
 Both a whitelist and blacklist may be used. Ivy version ranges are specified in accordance with [the Ivy version matcher docs](http://ant.apache.org/ivy/history/2.1.0/settings/version-matchers.html).
