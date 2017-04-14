@@ -62,7 +62,7 @@ compile in Compile <<= (compile in Compile).dependsOn(blockade)
 
 sbt-blockade will first check your direct dependencies.
 Any direct dependencies in violation of your `blockade.json` will case a build **error** when `blockade` is run.
-For instance, if scalaz stream version `7.1.a` is the latest version allowed, trying to depend on `0.8.6` will produce an error:
+For instance, if scalaz stream version `7.3.a` is the latest version allowed, trying to depend on `0.8.6` will produce an error:
 
 ```
 [warn] [test-proj] The following dependencies were caught in the blockade: 
