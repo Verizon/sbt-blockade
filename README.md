@@ -9,7 +9,7 @@
 
 ## Overview
 
-`sbt-blockade` gives you the ability to restrict which dependencies are tolerated in your builds using plain ol' JSON. Here's an example to whet your your appetite:
+`sbt-blockade` gives you the ability to restrict which dependencies are tolerated in your builds using plain ol' JSON. Here's an example to whet your appetite:
 
 ```json
 {
