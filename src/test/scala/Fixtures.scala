@@ -25,6 +25,7 @@ trait Fixtures extends DependencyBuilders {
 
   val `toplevel-has-direct-dep-on-scalaz` = "org.foo" %% "has-direct-dep-on-scalaz" % "1.2.4"
   val `toplevel-has-trans-dep-on-shapeless` = "org.foo" %% "has-trans-dep-on-shapeless" % "1.2.3"
+  val `toplevel-has-trans-dep-on-scalaz` = "org.foo" %% "has-trans-dep-on-scalaz" % "1.2.5"
   val `doobie-core-0.2.3` = "org.tpolecat" %% "doobie-core" % "0.2.3"
   val `scalaz-core-7.1.4` = "org.scalaz" %% "scalaz-core" % "7.1.4"
   val `scalaz-effect-7.1.4` = "org.scalaz" %% "scalaz-effect" % "7.1.4"
@@ -33,6 +34,7 @@ trait Fixtures extends DependencyBuilders {
 
   val m0HasScalazDep = Module(toModuleId(`toplevel-has-direct-dep-on-scalaz`))
   val m0HasShapelessTransDep = Module(toModuleId(`toplevel-has-trans-dep-on-shapeless`))
+  val m0HasScalazTransDep = Module(toModuleId(`toplevel-has-trans-dep-on-scalaz`))
   val m1 = Module(toModuleId(`doobie-core-0.2.3`))
   val m2 = Module(toModuleId(`scalaz-core-7.1.4`))
   val m3 = Module(
@@ -42,9 +44,10 @@ trait Fixtures extends DependencyBuilders {
   val m4 = Module(toModuleId(`scalaz-stream-0.8`))
   val m5 = Module(toModuleId(`shapeless-2.2.5`))
   val graphWithNestedShapeless = ModuleGraph(
-    nodes = Seq(m5, m3, m4, m0HasShapelessTransDep, m1, m2, m0HasScalazDep),
+    nodes = Seq(m5, m3, m4, m0HasShapelessTransDep, m0HasScalazTransDep, m1, m2, m0HasScalazDep),
     edges = Seq(
       m0HasShapelessTransDep.id -> m1.id,
+      m0HasScalazTransDep.id -> m1.id,
       m1.id -> m2.id,
       m1.id -> m3.id,
       m1.id -> m4.id,
@@ -53,9 +56,10 @@ trait Fixtures extends DependencyBuilders {
     )
   )
   val graphWithNestedShapelessWithoutEvicted = ModuleGraph(
-    nodes = Seq(m5, m4, m0HasShapelessTransDep, m1, m2, m0HasScalazDep),
+    nodes = Seq(m5, m4, m0HasShapelessTransDep, m0HasScalazTransDep, m1, m2, m0HasScalazDep),
     edges = Seq(
       m0HasShapelessTransDep.id -> m1.id,
+      m0HasScalazTransDep.id -> m1.id,
       m1.id -> m2.id,
       m1.id -> m4.id,
       m1.id -> m5.id,

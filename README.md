@@ -20,7 +20,7 @@
 }
 ```
 
-You can specify whitelisted packages, or blacklisted packages -- or both (see the section *Specifying dependency restrictions* for more info). 
+You can specify whitelisted packages, or blacklisted packages -- or both (see the section *Specifying dependency restrictions* for more info).
 
 You can restrict packages by version range, and for blacklisted items, you can define a "probationary"/"warning" period that expires after a particular expiry date.
 
@@ -65,7 +65,7 @@ Any direct dependencies in violation of your `blockade.json` will case a build *
 For instance, if scalaz stream version `7.3.a` is the latest version allowed, trying to depend on `0.8.6` will produce an error:
 
 ```
-[warn] [test-proj] The following dependencies were caught in the blockade: 
+[warn] [test-proj] The following dependencies were caught in the blockade:
 [warn] 	Restricted: org.scalaz.stream:scalaz-stream:0.8.6. Module within the exclusion range ']0.7.3a,)' and expires/expired at 2015-07-29 12:00:00.
 java.lang.RuntimeException: One or more of the specified immediate dependencies are restricted.
 	at scala.sys.package$.error(package.scala:27)
@@ -92,7 +92,7 @@ java.lang.RuntimeException: One or more of the specified immediate dependencies 
 [error] Total time: 5 s, completed Apr 14, 2017 4:05:46 PM
 ```
 
-Secondly, sbt-blockade will check your transitive dependencies.
+sbt-blockade will also check your transitive dependencies.
 If you instead have scalaz stream `0.8.6` as an _indirect_ dependency (say via http4s), you will get a **warning** and not an error:
 
 ```
@@ -100,33 +100,70 @@ If you instead have scalaz stream `0.8.6` as an _indirect_ dependency (say via h
 [warn] [test-proj]
 [warn] com.joescii:test-proj:0.0.1-SNAPSHOT has a restricted transitive dependency: org.scalaz.stream:scalaz-stream:0.8.6
 [warn]   Module within the exclusion range ']0.7.3a,)' and expires/expired at 2015-07-29 12:00:00.
-[warn] 
+[warn]
 [warn] Here is the dependency chain:
 [warn]   com.joescii:test-proj:0.0.1-SNAPSHOT
 [warn]     org.http4s:http4s-dsl:0.15.8
 [warn]       org.http4s:http4s-core:0.15.8
 [warn]         org.scalaz.stream:scalaz-stream:0.8.6
-[warn] 
+[warn]
 [info] Compiling 9 Scala sources to /Users/joescii/code/test-proj/target/scala-2.11/classes...
 [success] Total time: 32 s, completed Apr 14, 2017 4:10:12 PM
+```
+
+However, if you have `blockadeFailTransitive := true` then transitive dependency violation warnings become errors.
+
+```
+[info] [warn] [transitive-restricted-dependencies-failure]
+[info] [warn] default:transitive-restricted-dependencies-failure:0.1-SNAPSHOT has a restricted transitive dependency: com.chuusai:shapeless:2.3.1
+[info] [warn]   Module within the exclusion range '[1.0,4.0]' and expires/expired at 2012-06-12 15:36:31.
+[info] [warn]
+[info] [warn] Here is the dependency chain:
+[info] [warn]   default:transitive-restricted-dependencies-failure:0.1-SNAPSHOT
+[info] [warn]     org.scodec:scodec-core:1.10.0
+[info] [warn]       com.chuusai:shapeless:2.3.1
+[info] [warn]
+[info] java.lang.RuntimeException: One or more transitive dependencies are restricted.
+[info] 	at scala.sys.package$.error(package.scala:27)
+[info] 	at verizon.build.BlockadePlugin$$anonfun$settings$6.apply(plugin.scala:123)
+[info] 	at verizon.build.BlockadePlugin$$anonfun$settings$6.apply(plugin.scala:90)
+[info] 	at scala.Function1$$anonfun$compose$1.apply(Function1.scala:47)
+[info] 	at sbt.$tilde$greater$$anonfun$$u2219$1.apply(TypeFunctions.scala:40)
+[info] 	at sbt.std.Transform$$anon$4.work(System.scala:63)
+[info] 	at sbt.Execute$$anonfun$submit$1$$anonfun$apply$1.apply(Execute.scala:228)
+[info] 	at sbt.Execute$$anonfun$submit$1$$anonfun$apply$1.apply(Execute.scala:228)
+[info] 	at sbt.ErrorHandling$.wideConvert(ErrorHandling.scala:17)
+[info] 	at sbt.Execute.work(Execute.scala:237)
+[info] 	at sbt.Execute$$anonfun$submit$1.apply(Execute.scala:228)
+[info] 	at sbt.Execute$$anonfun$submit$1.apply(Execute.scala:228)
+[info] 	at sbt.ConcurrentRestrictions$$anon$4$$anonfun$1.apply(ConcurrentRestrictions.scala:159)
+[info] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:28)
+[info] 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+[info] 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+[info] 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+[info] 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[info] 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[info] 	at java.lang.Thread.run(Thread.java:745)
+[info] [error] (*:blockade) One or more transitive dependencies are restricted.
+[info] [error] Total time: 0 s, completed May 17, 2017 1:56:05 PM
 ```
 
 Finally, if you have a direct dependency which is blacklisted with a future expiration date, you will get a build **warning**:
 
 ```
-[warn] [test-proj] The following dependencies were caught in the blockade: 
+[warn] [test-proj] The following dependencies were caught in the blockade:
 [warn] 	Deprecated: org.scalaz.stream:scalaz-stream:0.8.6. Module within the exclusion range ']0.7.3a,)' and expires/expired at 2017-07-29 12:00:00.
 [warn] [test-proj]
 [warn] com.joescii:test-proj:0.0.1-SNAPSHOT has a restricted transitive dependency: org.scalaz.stream:scalaz-stream:0.8.6
 [warn]   Module within the exclusion range ']0.7.3a,)' and expires/expired at 2017-07-29 12:00:00.
-[warn] 
+[warn]
 [warn] Here is the dependency chain:
 [warn]   com.joescii:test-proj:0.0.1-SNAPSHOT
 [warn]     intelmedia.ws.common_akka23:s2s:15.0.230
 [warn]       oncue.monitoring:core:1.0.9
 [warn]         oncue.knobs:core:3.9.16
 [warn]           org.scalaz.stream:scalaz-stream:0.8.6
-[warn] 
+[warn]
 [info] Compiling 9 Scala sources to /Users/joescii/code/test-proj/target/scala-2.11/classes...
 [success] Total time: 13 s, completed Apr 14, 2017 4:18:14 PM
 ```
@@ -135,7 +172,7 @@ Note that in both cases where a warning is raised, the build isn't failed and `c
 
 ### Specifying dependency restrictions
 
-Both a whitelist and blacklist may be used. 
+Both a whitelist and blacklist may be used.
 Ivy version ranges are specified in accordance with [the Ivy version matcher docs](http://ant.apache.org/ivy/history/2.1.0/settings/version-matchers.html).
 
 Dependency restrictions are specified using a JSON object containing a (possibly empty) array of blacklisted items and a (possibly empty) array of whitelisted items. Here's an example:
