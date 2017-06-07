@@ -11,6 +11,7 @@ class RecursiveBlockadeSpec extends FreeSpec with MustMatchers {
   "given a dependency graph can topo sort the graph" in {
     GraphOps.topoSort(graphWithNestedShapeless).toList mustBe List(
       toModuleId(`toplevel-has-direct-dep-on-scalaz`),
+      toModuleId(`toplevel-has-trans-dep-on-scalaz`),
       toModuleId(`toplevel-has-trans-dep-on-shapeless`),
       toModuleId(`doobie-core-0.2.3`),
       toModuleId(`shapeless-2.2.5`),
@@ -65,7 +66,7 @@ class RecursiveBlockadeSpec extends FreeSpec with MustMatchers {
     "returns a representation of a warning that contains the path to the nested dep" in {
       val transposed = GraphOps.transpose(graphWithNestedShapeless)
 
-      findTransitiveWarning(constraints, transposed).get.fromCauseToRoot.toList mustBe
+      findTransitiveViolations(constraints, transposed).head.fromCauseToRoot.toList mustBe
         List(
           toModuleId(`shapeless-2.2.5`),
           toModuleId(`doobie-core-0.2.3`),
@@ -76,23 +77,38 @@ class RecursiveBlockadeSpec extends FreeSpec with MustMatchers {
       pending
       val transposed = GraphOps.transpose(graphWithNestedShapeless)
 
-      findTransitiveWarning(constraints, transposed).get.fromCauseToRoot.toList mustBe
+      findTransitiveViolations(constraints, transposed).head.fromCauseToRoot.toList mustBe
         List(
           toModuleId(`shapeless-2.2.5`),
           toModuleId(`doobie-core-0.2.3`),
           toModuleId(`toplevel-has-trans-dep-on-shapeless`)
         )
     }
+    "returns all violations" in {
+      val fo: (ModuleFilter, ModuleOutcome) = (
+        (id: ModuleID) =>
+          (toModuleId(id) == toModuleId(`shapeless-2.2.5`)) || (toModuleId(id) == toModuleId(`scalaz-core-7.1.4`)),
+        (id: ModuleID) => (Outcome.Restricted(id), "some message")
+      )
+      val constraints = Seq(fo)
 
+      val transposed = GraphOps.transpose(graphWithNestedShapeless)
+      findTransitiveViolations(constraints, transposed).map(_.outcome.underlying.map(toModuleId)).toSet mustBe
+      Set(
+        Some(toModuleId(`shapeless-2.2.5`)),
+        Some(toModuleId(`scalaz-core-7.1.4`))
+      )
+    }
   }
   "displaying restriction warning" in {
     val message = "some range message"
-    val w = TransitiveWarning(
+    val w = TransitiveViolation(
       List(
         toModuleId(`shapeless-2.2.5`),
         toModuleId(`doobie-core-0.2.3`),
         toModuleId(`toplevel-has-trans-dep-on-shapeless`)
       ),
+      Outcome.Ignored,
       message
     )
     showTransitiveDepResults(w) mustBe

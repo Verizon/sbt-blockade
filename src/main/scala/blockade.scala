@@ -192,7 +192,7 @@ object BlockadeOps {
    * @param rawgraph
    * @param ts
    */
-  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Blockade], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Option[TransitiveWarning]) = {
+  def analyseDeps(ms: Seq[ModuleID], ts: Seq[Blockade], rawgraph: ModuleGraph): (Seq[(Outcome, Message)], Seq[TransitiveViolation]) = {
     val fos = {
       val blockade = Blockade.catBlockades(ts)
       filterAndOutcomeFns(blockade)
@@ -201,13 +201,13 @@ object BlockadeOps {
     val omsAndFilters =
       analyseImmediateDeps(ms, fos)
 
-    val warning = {
+    val transitiveViolations = {
       // We transpose the graph so that *depended-upon* things point to *dependent* things.
       val g = GraphOps.transpose(stripUnderscores(rawgraph))
-      findTransitiveWarning(fos, g)
+      findTransitiveViolations(fos, g)
     }
 
-    (omsAndFilters, warning)
+    (omsAndFilters, transitiveViolations)
   }
 
   /**
@@ -229,20 +229,20 @@ object BlockadeOps {
    * @param g
    * @return
    */
-  def findTransitiveWarning(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Option[TransitiveWarning] = {
+  def findTransitiveViolations(restrictions: Seq[(ModuleFilter, ModuleOutcome)], g: ModuleGraph): Seq[TransitiveViolation] = {
     // Topological sort the id nodes.
     val sortedIds = GraphOps.topoSort(g)
 
     // Attempt to find a restricted id node.
     findRestrictedTransitiveDep(sortedIds, restrictions).map {
-      case (badModuleId, message) =>
+      case (badModuleId, outcome, message) =>
 
         // If we find a restricted id node, we find a path from an immediate dependency to that node,
         // so that users know where the offending module resides.
         val pathFromBadDepToRoot = getPathToRoot(sortedIds.dropWhile(_ != badModuleId), badModuleId, g.edges)
 
         // Return a representation of the collected info.
-        TransitiveWarning(pathFromBadDepToRoot, message)
+        TransitiveViolation(pathFromBadDepToRoot, outcome, message)
     }
   }
 
@@ -253,16 +253,17 @@ object BlockadeOps {
    * @param restrictions
    */
   def findRestrictedTransitiveDep(sortedNodes: Seq[ModuleId],
-                                  restrictions: Seq[(ModuleFilter, ModuleOutcome)]): Option[(ModuleId, BlockadeOps.Message)] = {
-    sortedNodes.map { id =>
-      restrictions.map {
-        case (mf, of) =>
-          val ID = toModuleID(id)
-          if (mf(ID)) Some((id, of(ID)._2))
-          else None
-      }.flatten.headOption
-    }.flatten.headOption
-  }
+                                  restrictions: Seq[(ModuleFilter, ModuleOutcome)]): Seq[(ModuleId, Outcome, Message)] =
+    for {
+      (mf,of) <- restrictions
+      n <- sortedNodes.flatMap { id =>
+        val ID = toModuleID(id)
+        if (mf(ID)) {
+          val (outcome, msg) = of(ID)
+          Seq((id, outcome, msg))
+        } else Seq.empty
+      }
+    } yield n
 
   /**
    * Create a ModuleFilter from a whitelist or blacklist item.
@@ -325,7 +326,7 @@ object BlockadeOps {
    * @param fromCauseToRoot
    * @param rangeMessage
    */
-  final case class TransitiveWarning(fromCauseToRoot: Seq[ModuleId], rangeMessage: String)
+  final case class TransitiveViolation(fromCauseToRoot: Seq[ModuleId], outcome: Outcome, rangeMessage: Message)
 
   type PathToRoot = Seq[ModuleId]
 
@@ -358,7 +359,7 @@ object BlockadeOps {
    * @param w
    * @return
    */
-  def showTransitiveDepResults(w: TransitiveWarning): String = {
+  def showTransitiveDepResults(w: TransitiveViolation): String = {
     val path = w.fromCauseToRoot.reverse
     def go(indent: Int, remaining: Seq[ModuleId], acc: String): String = remaining match {
       case Nil =>

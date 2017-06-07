@@ -31,6 +31,7 @@ object BlockadePlugin extends AutoPlugin { self =>
     val blockadeUris = settingKey[Seq[URI]]("blockade-uris")
     val blockade = taskKey[Unit]("blockade")
     val blockadeDependencyGraphCrossProjectId = settingKey[ModuleID]("blockade-dependency-graph-cross-project-id")
+    val blockadeFailTransitive = settingKey[Boolean]("blockade-fail-transitive")
   }
 
   import autoImport._
@@ -39,7 +40,8 @@ object BlockadePlugin extends AutoPlugin { self =>
   override def trigger = allRequirements
   override lazy val projectSettings = self.settings
   override lazy val globalSettings: Seq[Setting[_]] = Seq(
-    blockadeUris := Nil
+    blockadeUris := Nil,
+    blockadeFailTransitive := false
   )
 
   /** actual plugin content **/
@@ -100,7 +102,7 @@ object BlockadePlugin extends AutoPlugin { self =>
             log.error(s"Unable to execute the specified blockades because an error occurred: $e")
 
           // If we succeed in parsing the Blockades, we evaluate the dependency graph and display the results.
-          case Success((immediateOutcomes, maybeWarning)) =>
+          case Success((immediateOutcomes, transitiveViolations)) =>
             immediateOutcomes.toList match {
               case Nil =>
                 writeCheckFile(blockadeCacheFile.value, blockadeEnforcementInterval.value)
@@ -112,11 +114,20 @@ object BlockadePlugin extends AutoPlugin { self =>
                 else ()
               }
             }
-            maybeWarning match {
-              case None =>
+
+            val showTransitiveViolation: TransitiveViolation => Unit =
+              violation => log.warn(YELLOW + s"[${name.value}]" + showTransitiveDepResults(violation) + RESET)
+
+            transitiveViolations match {
+              case Nil =>
                 log.info(dependenciesOK(name = name.value, transitive = true))
-              case Some(w) =>
-                log.warn(YELLOW + s"[${name.value}]" + showTransitiveDepResults(w) + RESET)
+              case list@(violation +: _) =>
+                // If blockadeFailTransitive is turned on show all violations, otherwise just show one
+                if (blockadeFailTransitive.value) {
+                  list.foreach(showTransitiveViolation)
+                  if (list.exists(_.outcome.raisesError))
+                    sys.error("One or more transitive dependencies are restricted.")
+                } else showTransitiveViolation(violation)
             }
         }
       } else {

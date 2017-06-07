@@ -1,0 +1,16 @@
+{
+  "blacklist": [
+    {
+      "organization": "com.chuusai",
+      "name": "shapeless",
+      "range": "[1.0,4.0]",
+      "expiry": "3012-06-12 15:36:31"
+    },
+    {
+      "organization": "io.argonaut",
+      "name": "argonaut",
+      "range": "[6.0,7.0]",
+      "expiry": "3012-06-12 15:36:31"
+    }
+  ]
+}
