@@ -55,7 +55,7 @@ Once you defined your `blockade.json` as described [below](#specifying-dependenc
 Ideally, you will want to make `compile` depend on `blockade` like the following shows.
 
 ```
-compile in Compile <<= (compile in Compile).dependsOn(blockade)
+compile in Compile := (compile in Compile).dependsOn(blockade).value
 ```
 
 ### sbt-blockade results
