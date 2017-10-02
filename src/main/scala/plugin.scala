@@ -20,6 +20,8 @@ import sbt._
 import sbt.Keys._
 import scala.concurrent.duration._
 import depgraph._
+import scala.util.Try
+import verizon.build.blockadeio.JsonAsString
 
 object BlockadePlugin extends AutoPlugin { self =>
 
@@ -29,6 +31,7 @@ object BlockadePlugin extends AutoPlugin { self =>
     val blockadeEnforcementInterval = settingKey[Duration]("blockade-enforcement-interval")
     val blockadeCacheFile = settingKey[File]("blockade-cache-file")
     val blockadeUris = settingKey[Seq[URI]]("blockade-uris")
+    val blockadeUriResolver = taskKey[URI => Try[JsonAsString]]("blockade-uri-resolver")
     val blockade = taskKey[Unit]("blockade")
     val blockadeDependencyGraphCrossProjectId = settingKey[ModuleID]("blockade-dependency-graph-cross-project-id")
     val blockadeFailTransitive = settingKey[Boolean]("blockade-fail-transitive")
@@ -83,6 +86,7 @@ object BlockadePlugin extends AutoPlugin { self =>
     blockadeCacheFile := target.value / "blockaded",
     blockadeEnforcementInterval := 30.minutes,
     blockadeUris := Seq.empty,
+    blockadeUriResolver := blockadeio.loadFromURI,
     skip in blockade := {
       val f = blockadeCacheFile.value
       if (f.exists) readCheckFile(f) else false
@@ -92,7 +96,7 @@ object BlockadePlugin extends AutoPlugin { self =>
 
       // If the project has not been blockaded recently, we attempt to blockade and display results.
       if (!(skip in blockade).value) {
-        val parsedBlockadeItems: Try[Seq[Blockade]] = flattenTrys(blockadeUris.value.map(url => blockadeio.loadFromURI(url).flatMap(BlockadeOps.parseBlockade)))
+        val parsedBlockadeItems: Try[Seq[Blockade]] = flattenTrys(blockadeUris.value.map(url => blockadeUriResolver.value(url).flatMap(BlockadeOps.parseBlockade)))
         val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
         val graph: ModuleGraph = GraphOps.pruneEvicted(moduleGraphSbtTask.value)
         parsedBlockadeItems.map((blockades: Seq[Blockade]) => BlockadeOps.analyseDeps(deps, blockades, graph)) match {
