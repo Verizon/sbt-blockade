@@ -1,10 +1,11 @@
 package verizon.build
 
 import org.scalatest._
-import Fixtures._
-import BlockadeOps._
-import depgraph._
-import sbt._
+import sbt.ModuleID
+import sbt.librarymanagement.ModuleFilter
+import verizon.build.BlockadeOps._
+import verizon.build.Fixtures._
+import verizon.build.depgraph._
 
 class RecursiveBlockadeSpec extends FreeSpec with MustMatchers {
 

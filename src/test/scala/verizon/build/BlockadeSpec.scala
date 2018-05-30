@@ -1,16 +1,15 @@
 package verizon.build
 
-import org.scalatest.{FlatSpec, FreeSpec, Matchers, MustMatchers}
-
-import scala.util.{Failure, Success, Try}
-import sbt.ModuleID
 import java.text.SimpleDateFormat
 import java.util.Date
+import org.scalatest.{FreeSpec, MustMatchers}
+import sbt.ModuleID
+import scala.util.{Failure, Success}
 
 class BlockadeSpec extends FreeSpec with MustMatchers {
 
-  import Fixtures._
   import BlockadeOps._
+  import Fixtures._
 
   def df = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss")
 
@@ -38,9 +37,8 @@ class BlockadeSpec extends FreeSpec with MustMatchers {
   "module restriction and deprecation" - {
     "whitelisting" - {
       "inside of acceptable range is allowed" in {
-        val `scalaz-7.1.5` = "org.scalaz" %% "scalaz-core" % "7.1.5"
         check(
-          defined = Seq(`scalaz-7.1.5`),
+          defined = Seq(`scalaz-core-7.1.5`),
           expected = Seq()) {
           s"""
              |{
@@ -57,10 +55,9 @@ class BlockadeSpec extends FreeSpec with MustMatchers {
         }
       }
      "lower than acceptable range is restricted" in {
-       val `scalaz-7.0.4` = "org.scalaz" %% "scalaz-core" % "7.0.4"
        check(
-         defined = Seq(`scalaz-7.0.4`),
-         expected = Seq(Outcome.Restricted(`scalaz-7.0.4`))) {
+         defined = Seq(`scalaz-core-7.0.4`),
+         expected = Seq(Outcome.Restricted(`scalaz-core-7.0.4`))) {
          s"""
             |{
             |  "whitelist": [
@@ -77,10 +74,9 @@ class BlockadeSpec extends FreeSpec with MustMatchers {
      }
 
       "higher than acceptable range is restricted" in {
-        val `scalaz-7.2.0` = "org.scalaz" %% "scalaz-core" % "7.2.0"
         check(
-          defined = Seq(`scalaz-7.2.0`),
-          expected = Seq(Outcome.Restricted(`scalaz-7.2.0`))) {
+          defined = Seq(`scalaz-core-7.2.0`),
+          expected = Seq(Outcome.Restricted(`scalaz-core-7.2.0`))) {
           s"""
              |{
              |  "whitelist": [

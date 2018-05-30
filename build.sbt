@@ -1,13 +1,17 @@
+import sbt.Keys._
+import sbt._
 
 organization := "io.verizon.build"
 
 name := "sbt-blockade"
 
-scalacOptions ++= Seq("-deprecation", "-feature")
+scalaVersion := "2.12.6"
+
+sbtVersion in Global := "1.1.6"
+
+scalacOptions ++= Seq("-deprecation", "-feature", "-language:implicitConversions")
 
 sbtPlugin := true
-
-ScriptedPlugin.scriptedSettings
 
 scriptedLaunchOpts ++= Seq(
   "-Xmx1024M",
@@ -42,6 +46,8 @@ sonatypeProfileName := "io.verizon"
 
 pomPostProcess := { identity }
 
-libraryDependencies += "net.liftweb"   %% "lift-json" % "2.5.1"
+libraryDependencies += "net.liftweb" %% "lift-json" % "3.2.0"
+
+enablePlugins(ScalaTestPlugin)
 
 addCommandAlias("validate", ";test;scripted")

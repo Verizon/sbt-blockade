@@ -16,24 +16,17 @@
 //: ----------------------------------------------------------------------------
 package verizon.build
 
-import org.apache.ivy.plugins.version.VersionRangeMatcher
+import java.text.SimpleDateFormat
+import java.util.Date
+import net.liftweb.json._
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.plugins.latest.LatestRevisionStrategy
-
-import java.io.File
-import java.net.URL
-import java.util.Date
-import scala.io.Source
-import java.text.SimpleDateFormat
-import scala.language.reflectiveCalls
-import sbinary.{Format, DefaultProtocol}
-import scala.util.{Try, Failure, Success}
-import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
-import scala.collection.mutable.{MultiMap, HashMap, Set}
-
+import org.apache.ivy.plugins.version.VersionRangeMatcher
 import sbt._
-import depgraph._
-import net.liftweb.json._
+import sbt.librarymanagement.ModuleFilter
+import verizon.build.depgraph._
+import scala.Console.{CYAN, RED, RESET, YELLOW}
+import scala.util.Try
 
 /**
  * Represents a collection of whitelist and blacklist constraints.
@@ -349,7 +342,7 @@ object BlockadeOps {
       so.distinct.map {
         case (Outcome.Restricted(m), msg) => RED + s"Restricted: ${m.toString}. $msg" + RESET
         case (Outcome.Deprecated(m), msg) => YELLOW + s"Deprecated: ${m.toString}. $msg" + RESET
-        case (o, m) => "Unkonwn input to blockade display."
+        case (_, _) => "Unkonwn input to blockade display."
       }.mkString("\n\t", ",\n\t", "")
   }
 
