@@ -31,7 +31,7 @@ You can restrict packages by version range, and for blacklisted items, you can d
 First, add the following dependency to your project:
 
 ```
-addSbtPlugin("io.verizon.build" % "sbt-blockade" % "0.2.+")
+addSbtPlugin("io.verizon.build" % "sbt-blockade" % "1.0.0")
 ```
 
 ### Add build settings
