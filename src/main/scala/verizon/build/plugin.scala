@@ -16,12 +16,12 @@
 //: ----------------------------------------------------------------------------
 package verizon.build
 
-import sbt._
 import sbt.Keys._
-import scala.concurrent.duration._
-import depgraph._
-import scala.util.Try
+import sbt._
 import verizon.build.blockadeio.JsonAsString
+import verizon.build.depgraph._
+import scala.concurrent.duration._
+import scala.util.Try
 
 object BlockadePlugin extends AutoPlugin { self =>
 
@@ -48,11 +48,10 @@ object BlockadePlugin extends AutoPlugin { self =>
   )
 
   /** actual plugin content **/
-  import scala.Console.{CYAN, RED, YELLOW, GREEN, RESET}
-  import scala.util.{Try, Failure, Success}
-
-  import scala.io.Source
   import BlockadeOps._
+  import scala.Console.{GREEN, RESET, YELLOW}
+  import scala.io.Source
+  import scala.util.{Failure, Success, Try}
 
   private def dependenciesOK(name: String, transitive: Boolean = false): String =
     GREEN + s"[$name] All ${if (transitive) "transitive" else "direct"} dependencies are within current restrictions." + RESET
@@ -76,13 +75,25 @@ object BlockadePlugin extends AutoPlugin { self =>
     else Failure[Seq[T]](fs(0).exception) // Only keep the first failure
   }
 
-  val moduleGraphSbtTask =
-    (sbt.Keys.update, blockadeDependencyGraphCrossProjectId, sbt.Keys.configuration in Compile) map { (update, root, config) ⇒
-      SbtUpdateReport.fromConfigurationReport(update.configuration(config.name).get, root)
+  val moduleGraphSbtTask = {
+    Def.taskDyn {
+      val update = Keys.update.value
+      val root = blockadeDependencyGraphCrossProjectId.value
+      val config = (Keys.configuration in Compile).value
+
+      Def.task {
+        SbtUpdateReport.fromConfigurationReport(update.configuration(config).get, root)
+      }
     }
+  }
 
   def settings: Seq[Def.Setting[_]] = Seq(
-    blockadeDependencyGraphCrossProjectId <<= (Keys.scalaVersion, Keys.scalaBinaryVersion, Keys.projectID) ((sV, sBV, id) ⇒ CrossVersion(sV, sBV)(id)),
+    blockadeDependencyGraphCrossProjectId := {
+      val sV = Keys.scalaVersion.value
+      val sBV = Keys.scalaBinaryVersion.value
+      val id = Keys.projectID.value
+      CrossVersion(sV, sBV)(id)
+    },
     blockadeCacheFile := target.value / "blockaded",
     blockadeEnforcementInterval := 30.minutes,
     blockadeUris := Seq.empty,
@@ -91,53 +102,55 @@ object BlockadePlugin extends AutoPlugin { self =>
       val f = blockadeCacheFile.value
       if (f.exists) readCheckFile(f) else false
     },
-    blockade := {
+    blockade := Def.taskDyn {
       val log = streams.value.log
 
       // If the project has not been blockaded recently, we attempt to blockade and display results.
       if (!(skip in blockade).value) {
-        val parsedBlockadeItems: Try[Seq[Blockade]] = flattenTrys(blockadeUris.value.map(url => blockadeUriResolver.value(url).flatMap(BlockadeOps.parseBlockade)))
-        val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
-        val graph: ModuleGraph = GraphOps.pruneEvicted(moduleGraphSbtTask.value)
-        parsedBlockadeItems.map((blockades: Seq[Blockade]) => BlockadeOps.analyseDeps(deps, blockades, graph)) match {
-          case Failure(_: java.net.UnknownHostException) => ()
+        Def.task {
+          val parsedBlockadeItems: Try[Seq[Blockade]] = flattenTrys(blockadeUris.value.map(url => blockadeUriResolver.value(url).flatMap(BlockadeOps.parseBlockade)))
+          val deps: Seq[ModuleID] = (libraryDependencies in Compile).value
+          val graph: ModuleGraph = GraphOps.pruneEvicted(moduleGraphSbtTask.value)
+          parsedBlockadeItems.map((blockades: Seq[Blockade]) => BlockadeOps.analyseDeps(deps, blockades, graph)) match {
+            case Failure(_: java.net.UnknownHostException) => ()
 
-          case Failure(e) =>
-            log.error(s"Unable to execute the specified blockades because an error occurred: $e")
+            case Failure(e) =>
+              log.error(s"Unable to execute the specified blockades because an error occurred: $e")
 
-          // If we succeed in parsing the Blockades, we evaluate the dependency graph and display the results.
-          case Success((immediateOutcomes, transitiveViolations)) =>
-            immediateOutcomes.toList match {
-              case Nil =>
-                writeCheckFile(blockadeCacheFile.value, blockadeEnforcementInterval.value)
-                log.info(dependenciesOK(name.value))
-              case list => {
-                log.warn(showImmediateDepResults(name.value, list))
-                if (list.exists(_._1.raisesError == true))
-                  sys.error("One or more of the specified immediate dependencies are restricted.")
-                else ()
+            // If we succeed in parsing the Blockades, we evaluate the dependency graph and display the results.
+            case Success((immediateOutcomes, transitiveViolations)) =>
+              immediateOutcomes.toList match {
+                case Nil =>
+                  writeCheckFile(blockadeCacheFile.value, blockadeEnforcementInterval.value)
+                  log.info(dependenciesOK(name.value))
+                case list => {
+                  log.warn(showImmediateDepResults(name.value, list))
+                  if (list.exists(_._1.raisesError == true))
+                    sys.error("One or more of the specified immediate dependencies are restricted.")
+                  else ()
+                }
               }
-            }
 
-            val showTransitiveViolation: TransitiveViolation => Unit =
-              violation => log.warn(YELLOW + s"[${name.value}]" + showTransitiveDepResults(violation) + RESET)
+              val showTransitiveViolation: TransitiveViolation => Unit =
+                violation => log.warn(YELLOW + s"[${name.value}]" + showTransitiveDepResults(violation) + RESET)
 
-            transitiveViolations match {
-              case Nil =>
-                log.info(dependenciesOK(name = name.value, transitive = true))
-              case list@(violation +: _) =>
-                // If blockadeFailTransitive is turned on show all violations, otherwise just show one
-                if (blockadeFailTransitive.value) {
-                  list.foreach(showTransitiveViolation)
-                  if (list.exists(_.outcome.raisesError))
-                    sys.error("One or more transitive dependencies are restricted.")
-                } else showTransitiveViolation(violation)
-            }
+              transitiveViolations match {
+                case Nil =>
+                  log.info(dependenciesOK(name = name.value, transitive = true))
+                case list@(violation +: _) =>
+                  // If blockadeFailTransitive is turned on show all violations, otherwise just show one
+                  if (blockadeFailTransitive.value) {
+                    list.foreach(showTransitiveViolation)
+                    if (list.exists(_.outcome.raisesError))
+                      sys.error("One or more transitive dependencies are restricted.")
+                  } else showTransitiveViolation(violation)
+              }
+          }
         }
       } else {
         // Do nothing since the project has been blockaded recently.
-        ()
+        Def.task(())
       }
-    }
+    }.value
   )
 }

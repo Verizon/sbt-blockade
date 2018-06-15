@@ -1,12 +1,12 @@
 package verizon.build
 
-import sbt.impl.DependencyBuilders
+import sbt._
 import java.net.URL
 import depgraph._
 import BlockadeOps._
 
 object Fixtures extends Fixtures
-trait Fixtures extends DependencyBuilders {
+trait Fixtures {
   def load(p: String): URL =
     getClass.getClassLoader.getResource(p)
 
@@ -28,6 +28,9 @@ trait Fixtures extends DependencyBuilders {
   val `toplevel-has-trans-dep-on-scalaz` = "org.foo" %% "has-trans-dep-on-scalaz" % "1.2.5"
   val `doobie-core-0.2.3` = "org.tpolecat" %% "doobie-core" % "0.2.3"
   val `scalaz-core-7.1.4` = "org.scalaz" %% "scalaz-core" % "7.1.4"
+  val `scalaz-core-7.1.5` = "org.scalaz" %% "scalaz-core" % "7.1.5"
+  val `scalaz-core-7.0.4` = "org.scalaz" %% "scalaz-core" % "7.0.4"
+  val `scalaz-core-7.2.0` = "org.scalaz" %% "scalaz-core" % "7.2.0"
   val `scalaz-effect-7.1.4` = "org.scalaz" %% "scalaz-effect" % "7.1.4"
   val `scalaz-stream-0.8` = "org.scalaz.stream" %% "scalaz-stream" % "0.8"
   val `shapeless-2.2.5` = "com.chuusai" %% "shapeless" % "2.2.5"
