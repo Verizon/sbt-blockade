@@ -7,7 +7,7 @@ name := "sbt-blockade"
 
 scalaVersion := "2.12.6"
 
-sbtVersion in Global := "1.1.6"
+sbtVersion in Global := "1.2.8"
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-language:implicitConversions")
 
