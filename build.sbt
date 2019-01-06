@@ -1,6 +1,8 @@
 import sbt.Keys._
 import sbt._
 
+enablePlugins(SbtPlugin)
+
 organization := "io.verizon.build"
 
 name := "sbt-blockade"
@@ -10,8 +12,6 @@ scalaVersion := "2.12.6"
 sbtVersion in Global := "1.2.8"
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-language:implicitConversions")
-
-sbtPlugin := true
 
 scriptedLaunchOpts ++= Seq(
   "-Xmx1024M",
